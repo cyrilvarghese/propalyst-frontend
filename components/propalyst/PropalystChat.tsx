@@ -27,8 +27,17 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Bot, Send } from 'lucide-react'
+import { motion } from 'framer-motion'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 import DynamicRenderer from '@/components/DynamicRenderer'
 import ChatMessage from './ChatMessage'
+import AreaCard from './AreaCard'
 import { PropalystService } from '@/lib/services'
 import type {
   ChatMessage as ChatMessageType,
@@ -55,6 +64,10 @@ export default function PropalystChat() {
   const [showCompletionAlert, setShowCompletionAlert] = useState(false)
   const [summary, setSummary] = useState<string>('')
   const [summaryLoading, setSummaryLoading] = useState(false)
+
+  // Area cards state
+  const [showAreaCards, setShowAreaCards] = useState(false)
+  const [areaCardsLoading, setAreaCardsLoading] = useState(false)
 
   // Initial loading state
   const [isInitialLoading, setIsInitialLoading] = useState(true)
@@ -117,6 +130,18 @@ export default function PropalystChat() {
     }
   }, [completed, summary])
 
+  // Load area cards after summary is generated
+  useEffect(() => {
+    if (summary && !showAreaCards && !areaCardsLoading) {
+      // Wait 1 second after summary appears, then load area cards
+      const timer = setTimeout(() => {
+        loadAreaCards()
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [summary, showAreaCards, areaCardsLoading])
+
   /**
    * Fetch conversation summary from backend
    */
@@ -135,6 +160,20 @@ export default function PropalystChat() {
       setSummary('Unable to generate summary. Please try again.')
       setSummaryLoading(false)
     }
+  }
+
+  /**
+   * Load area cards with mock data
+   * In production, this would fetch from backend based on search criteria
+   */
+  const loadAreaCards = async () => {
+    setAreaCardsLoading(true)
+
+    // Simulate API call with timeout
+    setTimeout(() => {
+      setAreaCardsLoading(false)
+      setShowAreaCards(true)
+    }, 2000)
   }
 
   /**
@@ -382,7 +421,22 @@ export default function PropalystChat() {
   }
 
   return (
-    <div className="flex flex-col h-[700px] max-w-4xl mx-auto">
+    <motion.div
+      className="flex flex-col h-[700px] mx-auto"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+        width: summary ? "80vw" : "896px" // 896px = max-w-4xl, then expand to 80vw
+      }}
+      transition={{
+        duration: 1.2,
+        delay: 0.5,
+        ease: [0, 0.71, 0.2, 1.01],
+        opacity: { duration: 1.5, ease: "easeInOut" },
+        width: { duration: 1.2, ease: [0.4, 0, 0.2, 1] } // Slower, more subtle cubic-bezier
+      }}
+    >
       {/* Header with premium effects */}
       <Card className="p-5 mb-4 bg-white/95 backdrop-blur-xl shadow-2xl border border-white/20 relative overflow-hidden">
         {/* Subtle gradient overlay */}
@@ -411,8 +465,8 @@ export default function PropalystChat() {
 
       {/* Chat area with glassmorphism */}
       <Card className="flex-1 flex flex-col overflow-hidden bg-white/95 backdrop-blur-xl shadow-2xl border border-white/20 relative">
-        <ScrollArea className="flex-1 p-6 overflow-x-hidden">
-          <div className="space-y-6 w-full overflow-x-hidden">
+        <ScrollArea className="flex-1 p-6">
+          <div className="space-y-6 w-full max-w-full">
             {/* Message history */}
             {messages.map((msg, index) => (
               <ChatMessage key={index} message={msg} />
@@ -511,6 +565,84 @@ export default function PropalystChat() {
                     />
                   </div>
                 ) : null}
+
+                {/* Area Cards Loading Message */}
+                {areaCardsLoading && (
+                  <div className="flex items-center gap-3 text-gray-600 py-4">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                    <span className="text-sm font-medium">Loading areas relevant to your search...</span>
+                  </div>
+                )}
+
+                {/* Area Cards Grid */}
+                {showAreaCards && (
+                  <div className="py-4 w-full">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+                      Recommended Areas
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full mx-auto">
+                      {/* Mock Data - Whitefield and surrounding areas */}
+                      <AreaCard
+                        areaName="Whitefield"
+                        image="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2053"
+                        childFriendlyScore={9}
+                        schoolsNearby={12}
+                        averageCommute="15-20 min"
+                        budgetRange="₹60K - ₹85K"
+                        highlights={["IT Hub", "Great Schools", "Metro Access"]}
+                      />
+                      <AreaCard
+                        areaName="Marathahalli"
+                        image="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075"
+                        childFriendlyScore={8}
+                        schoolsNearby={10}
+                        averageCommute="20-25 min"
+                        budgetRange="₹50K - ₹75K"
+                        highlights={["Good Connectivity", "Family Friendly", "Shopping"]}
+                      />
+                      <AreaCard
+                        areaName="Indiranagar"
+                        image="https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071"
+                        childFriendlyScore={7}
+                        schoolsNearby={8}
+                        averageCommute="25-30 min"
+                        budgetRange="₹70K - ₹90K"
+                        highlights={["Upscale Area", "Parks", "Cafes & Restaurants"]}
+                      />
+                      <AreaCard
+                        areaName="Brookefield"
+                        image="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070"
+                        childFriendlyScore={9}
+                        schoolsNearby={15}
+                        averageCommute="10-15 min"
+                        budgetRange="₹55K - ₹80K"
+                        highlights={["Close to Whitefield", "Quiet", "Premium Schools"]}
+                      />
+                      <AreaCard
+                        areaName="Koramangala"
+                        image="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070"
+                        childFriendlyScore={7}
+                        schoolsNearby={9}
+                        averageCommute="30-35 min"
+                        budgetRange="₹65K - ₹95K"
+                        highlights={["Vibrant", "Startups", "Nightlife"]}
+                      />
+                      <AreaCard
+                        areaName="HSR Layout"
+                        image="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=2074"
+                        childFriendlyScore={8}
+                        schoolsNearby={11}
+                        averageCommute="25-30 min"
+                        budgetRange="₹55K - ₹80K"
+                        highlights={["Parks", "Shopping", "Well-planned"]}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -543,6 +675,6 @@ export default function PropalystChat() {
           </div>
         </div>
       </Card>
-    </div>
+    </motion.div>
   )
 }

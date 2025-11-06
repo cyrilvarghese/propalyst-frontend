@@ -42,7 +42,7 @@ export default function PropalystPage() {
       {/* Dark overlay for readability - darker like reference image */}
       <div className="absolute inset-0 bg-black/80 z-0" />
 
-      <div className="max-w-5xl mx-auto px-4 relative z-10">
+      <div className="w-full px-4 relative z-10 flex flex-col items-center">
         {/* Page header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold mb-3 pt-8">
