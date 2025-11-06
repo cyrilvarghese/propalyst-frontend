@@ -15,13 +15,13 @@ import { useState, useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Bot } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DynamicRenderer from '@/components/DynamicRenderer'
 import ChatMessage from './ChatMessage'
 import ChatHeader from './ChatHeader'
 import ChatInput from './ChatInput'
-import { PropalystService } from '@/lib/services'
+import LoadingIndicator from './LoadingIndicator'
+import { PropalystService, Area } from '@/lib/services'
 import type {
   ChatMessage as ChatMessageType,
   UIComponent,
@@ -32,12 +32,14 @@ interface PropalystChatProps {
   onAreaCardsReady?: (show: boolean, loading: boolean) => void
   onSummaryGenerated?: (summary: string) => void
   onSummaryLoadingChange?: (loading: boolean) => void
+  onAreasLoaded?: (areas: Area[]) => void
 }
 
 export default function PropalystChat({
   onAreaCardsReady,
   onSummaryGenerated,
-  onSummaryLoadingChange
+  onSummaryLoadingChange,
+  onAreasLoaded
 }: PropalystChatProps) {
   // Session and state
   const [sessionId, setSessionId] = useState<string>('')
@@ -101,16 +103,11 @@ export default function PropalystChat({
     }
   }, [sessionId, showChat])
 
-  // Handle completion - add loading message and fetch summary
+  // Handle completion - show loading indicator and fetch summary
   useEffect(() => {
     if (completed && !summary) {
-      // Add loading message to chat
-      const loadingMessage: ChatMessageType = {
-        role: 'agent',
-        content: 'Loading area recommendations...',
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, loadingMessage])
+      // Set loading state to show loading indicator
+      setLoadingState('loading')
 
       // Fetch summary after 500ms
       const summaryTimer = setTimeout(() => {
@@ -147,6 +144,7 @@ export default function PropalystChat({
 
       setSummary(data.summary)
       setSummaryLoading(false)
+      setLoadingState('success') // Remove loading indicator
       if (onSummaryLoadingChange) {
         onSummaryLoadingChange(false)
       }
@@ -159,6 +157,7 @@ export default function PropalystChat({
       console.error('Failed to fetch summary:', err)
       setSummary('Unable to generate summary. Please try again.')
       setSummaryLoading(false)
+      setLoadingState('error')
       if (onSummaryLoadingChange) {
         onSummaryLoadingChange(false)
       }
@@ -166,7 +165,7 @@ export default function PropalystChat({
   }
 
   /**
-   * Load area cards - notify parent to show them
+   * Load area cards - fetch from backend API
    */
   const loadAreaCards = async () => {
     setAreaCardsLoading(true)
@@ -176,15 +175,32 @@ export default function PropalystChat({
       onAreaCardsReady(false, true)
     }
 
-    // Simulate API call with timeout
-    setTimeout(() => {
+    try {
+      // Fetch areas from backend
+      const data = await PropalystService.fetchAreas({
+        session_id: sessionId,
+      })
+
+      // Notify parent with fetched areas
+      if (onAreasLoaded) {
+        onAreasLoaded(data.areas)
+      }
+
       setAreaCardsLoading(false)
 
       // Notify parent to show area cards
       if (onAreaCardsReady) {
         onAreaCardsReady(true, false)
       }
-    }, 2000)
+    } catch (err) {
+      console.error('Failed to fetch areas:', err)
+      setAreaCardsLoading(false)
+
+      // Still notify parent even on error (will show empty state)
+      if (onAreaCardsReady) {
+        onAreaCardsReady(true, false)
+      }
+    }
   }
 
   /**
@@ -457,24 +473,8 @@ export default function PropalystChat({
               )}
 
               {/* Loading indicator */}
-              {loadingState === 'loading' && (
-                <div className="flex justify-start">
-                  <div className="flex items-start gap-2 max-w-[75%]">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground flex-shrink-0">
-                      <Bot className="w-5 h-5" />
-                    </div>
-                    <div className="bg-muted px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {loadingState === 'loading' && !completed && <LoadingIndicator />}
+              {loadingState === 'loading' && completed && <LoadingIndicator message="Loading recommendations" />}
 
               {/* Error message */}
               {error && (

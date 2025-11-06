@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import PropalystChat from '@/components/propalyst/PropalystChat'
 import RecommendedSection from '@/components/propalyst/RecommendedSection'
+import { Area } from '@/lib/services'
 
 // High-end residential property background images
 const BACKGROUND_IMAGES = [
@@ -28,6 +29,7 @@ export default function PropalystPage() {
   // Area cards state - managed at page level
   const [showAreaCards, setShowAreaCards] = useState(false)
   const [areaCardsLoading, setAreaCardsLoading] = useState(false)
+  const [areas, setAreas] = useState<Area[]>([])
 
   // Summary state - managed at page level
   const [summary, setSummary] = useState('')
@@ -57,9 +59,19 @@ export default function PropalystPage() {
     setSummaryLoading(loading)
   }
 
-  // Auto-scroll to recommended section when skeleton cards load
+  // Handle areas loaded from API
+  const handleAreasLoaded = (loadedAreas: Area[]) => {
+    setAreas(loadedAreas)
+  }
+
+  // Track previous loading state to ensure scroll only happens when skeleton cards APPEAR
+  const prevLoadingRef = useRef(false)
+
+  // Auto-scroll to recommended section ONLY when skeleton cards start loading
+  // Do NOT scroll when actual cards replace skeletons
   useEffect(() => {
-    if (areaCardsLoading && summaryRef.current) {
+    // Only scroll on transition from false → true (skeleton cards appearing)
+    if (areaCardsLoading && !prevLoadingRef.current && summaryRef.current) {
       setTimeout(() => {
         // Scroll to show the recommended areas section at the top
         summaryRef.current?.scrollIntoView({
@@ -68,6 +80,9 @@ export default function PropalystPage() {
         })
       }, 200)
     }
+
+    // Update previous state for next render
+    prevLoadingRef.current = areaCardsLoading
   }, [areaCardsLoading])
 
   return (
@@ -99,6 +114,7 @@ export default function PropalystPage() {
           onAreaCardsReady={handleAreaCardsReady}
           onSummaryGenerated={handleSummaryGenerated}
           onSummaryLoadingChange={handleSummaryLoadingChange}
+          onAreasLoaded={handleAreasLoaded}
         />
 
         {/* Recommended Properties Section - Combined summary and area cards */}
@@ -108,6 +124,7 @@ export default function PropalystPage() {
             summaryLoading={summaryLoading}
             areaCardsLoading={areaCardsLoading}
             visible={showAreaCards}
+            areas={areas}
           />
         </div>
       </div>

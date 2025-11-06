@@ -21,6 +21,10 @@ export interface SummaryRequest {
   session_id: string
 }
 
+export interface AreasRequest {
+  session_id: string
+}
+
 /**
  * Response types
  */
@@ -41,6 +45,21 @@ export interface ChatResponse {
 
 export interface SummaryResponse {
   summary: string
+  session_id: string
+}
+
+export interface Area {
+  areaName: string
+  image: string
+  childFriendlyScore: number
+  schoolsNearby: number
+  averageCommute: string
+  budgetRange: string
+  highlights: string[]
+}
+
+export interface AreasResponse {
+  areas: Area[]
   session_id: string
 }
 
@@ -72,6 +91,25 @@ export class PropalystService {
    */
   static async fetchSummary(request: SummaryRequest): Promise<SummaryResponse> {
     const response = await fetch(`${API_BASE_URL}/api/propalyst/summary`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return response.json()
+  }
+
+  /**
+   * Fetch recommended areas
+   */
+  static async fetchAreas(request: AreasRequest): Promise<AreasResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/propalyst/areas`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
