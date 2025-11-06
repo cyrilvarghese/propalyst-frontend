@@ -12,6 +12,7 @@ interface AreaCardProps {
   averageCommute: string // "15-20 min"
   budgetRange: string // "₹40K - ₹60K"
   highlights: string[]
+  delay?: number // Optional delay for staggered animation
 }
 
 export default function AreaCard({
@@ -21,13 +22,18 @@ export default function AreaCard({
   schoolsNearby,
   averageCommute,
   budgetRange,
-  highlights
+  highlights,
+  delay = 0
 }: AreaCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
+      transition={{
+        duration: 0.5,
+        ease: "easeOut",
+        delay: delay
+      }}
       whileHover={{ scale: 1.02 }}
       className="w-full"
     >

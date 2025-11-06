@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import PropalystChat from '@/components/propalyst/PropalystChat'
+import RecommendedSection from '@/components/propalyst/RecommendedSection'
 
 // High-end residential property background images
 const BACKGROUND_IMAGES = [
@@ -24,10 +25,50 @@ const BACKGROUND_IMAGES = [
 ]
 
 export default function PropalystPage() {
+  // Area cards state - managed at page level
+  const [showAreaCards, setShowAreaCards] = useState(false)
+  const [areaCardsLoading, setAreaCardsLoading] = useState(false)
+
+  // Summary state - managed at page level
+  const [summary, setSummary] = useState('')
+  const [summaryLoading, setSummaryLoading] = useState(false)
+
+  // Ref for auto-scrolling to summary
+  const summaryRef = useRef<HTMLDivElement>(null)
+
   // Randomly select a background image on each page load
   const backgroundImage = useMemo(() => {
     return BACKGROUND_IMAGES[Math.floor(Math.random() * BACKGROUND_IMAGES.length)]
   }, [])
+
+  // Handle area cards state from chat component
+  const handleAreaCardsReady = (show: boolean, loading: boolean) => {
+    setShowAreaCards(show)
+    setAreaCardsLoading(loading)
+  }
+
+  // Handle summary generation
+  const handleSummaryGenerated = (summaryText: string) => {
+    setSummary(summaryText)
+  }
+
+  // Handle summary loading state
+  const handleSummaryLoadingChange = (loading: boolean) => {
+    setSummaryLoading(loading)
+  }
+
+  // Auto-scroll to recommended section when skeleton cards load
+  useEffect(() => {
+    if (areaCardsLoading && summaryRef.current) {
+      setTimeout(() => {
+        // Scroll to show the recommended areas section at the top
+        summaryRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
+      }, 200)
+    }
+  }, [areaCardsLoading])
 
   return (
     <div
@@ -44,17 +85,31 @@ export default function PropalystPage() {
 
       <div className="w-full px-4 relative z-10 flex flex-col items-center">
         {/* Page header */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold mb-3 pt-8">
+        <div className="text-center mb-8 px-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 pt-8">
             <span className="text-[#E6D3AF]">Propalyst</span><span className="text-white">.AI</span>
           </h1>
-          <p className="text-xl text-gray-200">
+          <p className="text-base sm:text-lg md:text-xl text-gray-200">
             Your Personal Home Advisor
           </p>
         </div>
 
         {/* Chat interface */}
-        <PropalystChat />
+        <PropalystChat
+          onAreaCardsReady={handleAreaCardsReady}
+          onSummaryGenerated={handleSummaryGenerated}
+          onSummaryLoadingChange={handleSummaryLoadingChange}
+        />
+
+        {/* Recommended Properties Section - Combined summary and area cards */}
+        <div ref={summaryRef} className="mt-8">
+          <RecommendedSection
+            summary={summary}
+            summaryLoading={summaryLoading}
+            areaCardsLoading={areaCardsLoading}
+            visible={showAreaCards}
+          />
+        </div>
       </div>
     </div>
   )

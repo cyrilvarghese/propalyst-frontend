@@ -2,19 +2,11 @@
  * PropalystChat - Main conversational interface
  * ==============================================
  *
- * This component handles the entire Propalyst Q&A conversation flow:
- * 1. Generates unique session_id
- * 2. Manages message history
- * 3. Makes API calls to backend
- * 4. Renders dynamic UI components
- * 5. Handles user answers
- *
- * Flow:
- * -----
- * Initial load → Ask Q1 (work location)
- * User answers Q1 → Ask Q2 (kids)
- * User answers Q2 → Ask Q3 (commute)
- * ... continues until all 5 questions answered
+ * This component orchestrates the Propalyst Q&A conversation flow:
+ * 1. Manages session state and API communication
+ * 2. Coordinates child components (Header, Messages, Input)
+ * 3. Handles completion flow and summary generation
+ * 4. Notifies parent about area cards display
  */
 
 'use client'
@@ -23,30 +15,30 @@ import { useState, useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Bot, Send } from 'lucide-react'
+import { Bot } from 'lucide-react'
 import { motion } from 'framer-motion'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
 import DynamicRenderer from '@/components/DynamicRenderer'
 import ChatMessage from './ChatMessage'
-import AreaCard from './AreaCard'
+import ChatHeader from './ChatHeader'
+import ChatInput from './ChatInput'
 import { PropalystService } from '@/lib/services'
 import type {
   ChatMessage as ChatMessageType,
-  PropalystChatResponse,
   UIComponent,
   LoadingState
 } from '@/lib/types/propalyst'
 
-export default function PropalystChat() {
+interface PropalystChatProps {
+  onAreaCardsReady?: (show: boolean, loading: boolean) => void
+  onSummaryGenerated?: (summary: string) => void
+  onSummaryLoadingChange?: (loading: boolean) => void
+}
+
+export default function PropalystChat({
+  onAreaCardsReady,
+  onSummaryGenerated,
+  onSummaryLoadingChange
+}: PropalystChatProps) {
   // Session and state
   const [sessionId, setSessionId] = useState<string>('')
   const [messages, setMessages] = useState<ChatMessageType[]>([])
@@ -61,12 +53,10 @@ export default function PropalystChat() {
   const [chatInput, setChatInput] = useState('')
 
   // Summary state
-  const [showCompletionAlert, setShowCompletionAlert] = useState(false)
   const [summary, setSummary] = useState<string>('')
   const [summaryLoading, setSummaryLoading] = useState(false)
 
   // Area cards state
-  const [showAreaCards, setShowAreaCards] = useState(false)
   const [areaCardsLoading, setAreaCardsLoading] = useState(false)
 
   // Initial loading state
@@ -95,6 +85,10 @@ export default function PropalystChat() {
     const timer = setTimeout(() => {
       setIsInitialLoading(false)
       setShowChat(true)
+      // Focus on chat input after chat is visible
+      setTimeout(() => {
+        chatInputRef.current?.focus()
+      }, 500)
     }, 2000)
 
     return () => clearTimeout(timer)
@@ -107,46 +101,44 @@ export default function PropalystChat() {
     }
   }, [sessionId, showChat])
 
-  // Handle completion - show alert then fetch summary
+  // Handle completion - add loading message and fetch summary
   useEffect(() => {
     if (completed && !summary) {
-      // Show completion alert
-      setShowCompletionAlert(true)
+      // Add loading message to chat
+      const loadingMessage: ChatMessageType = {
+        role: 'agent',
+        content: 'Loading area recommendations...',
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, loadingMessage])
 
-      // Fade out alert after 2.5 seconds
-      const alertTimer = setTimeout(() => {
-        setShowCompletionAlert(false)
-      }, 2500)
-
-      // Fetch summary after 1 second
+      // Fetch summary after 500ms
       const summaryTimer = setTimeout(() => {
         fetchSummary()
-      }, 1000)
+      }, 500)
 
       return () => {
-        clearTimeout(alertTimer)
         clearTimeout(summaryTimer)
       }
     }
   }, [completed, summary])
 
-  // Load area cards after summary is generated
+  // Load area cards immediately when summary is generated
   useEffect(() => {
-    if (summary && !showAreaCards && !areaCardsLoading) {
-      // Wait 1 second after summary appears, then load area cards
-      const timer = setTimeout(() => {
-        loadAreaCards()
-      }, 1000)
-
-      return () => clearTimeout(timer)
+    if (summary && !areaCardsLoading) {
+      // Show skeleton cards immediately with summary
+      loadAreaCards()
     }
-  }, [summary, showAreaCards, areaCardsLoading])
+  }, [summary])
 
   /**
    * Fetch conversation summary from backend
    */
   const fetchSummary = async () => {
     setSummaryLoading(true)
+    if (onSummaryLoadingChange) {
+      onSummaryLoadingChange(true)
+    }
 
     try {
       const data = await PropalystService.fetchSummary({
@@ -155,24 +147,43 @@ export default function PropalystChat() {
 
       setSummary(data.summary)
       setSummaryLoading(false)
+      if (onSummaryLoadingChange) {
+        onSummaryLoadingChange(false)
+      }
+
+      // Notify parent that summary is ready
+      if (onSummaryGenerated) {
+        onSummaryGenerated(data.summary)
+      }
     } catch (err) {
       console.error('Failed to fetch summary:', err)
       setSummary('Unable to generate summary. Please try again.')
       setSummaryLoading(false)
+      if (onSummaryLoadingChange) {
+        onSummaryLoadingChange(false)
+      }
     }
   }
 
   /**
-   * Load area cards with mock data
-   * In production, this would fetch from backend based on search criteria
+   * Load area cards - notify parent to show them
    */
   const loadAreaCards = async () => {
     setAreaCardsLoading(true)
 
+    // Notify parent that area cards are loading
+    if (onAreaCardsReady) {
+      onAreaCardsReady(false, true)
+    }
+
     // Simulate API call with timeout
     setTimeout(() => {
       setAreaCardsLoading(false)
-      setShowAreaCards(true)
+
+      // Notify parent to show area cards
+      if (onAreaCardsReady) {
+        onAreaCardsReady(true, false)
+      }
     }, 2000)
   }
 
@@ -213,19 +224,7 @@ export default function PropalystChat() {
             setMessages(prev => [...prev, secondMessage])
 
             // Update UI with controls/component when second message appears
-            setCurrentComponent(data.component)
-            if (data.component?.props?.field) {
-              setCurrentField(data.component.props.field)
-            } else {
-              // No component means text input via chat - determine field from step
-              if (data.current_step === 1) {
-                setCurrentField('work_location')
-              }
-            }
-
-            setCurrentStep(data.current_step)
-            setCompleted(data.completed)
-            setLoadingState('success')
+            updateUIState(data)
           }, 1500)
         } else {
           // Single message: show immediately with controls
@@ -236,19 +235,7 @@ export default function PropalystChat() {
           }])
 
           // Update UI immediately for single message
-          setCurrentComponent(data.component)
-          if (data.component?.props?.field) {
-            setCurrentField(data.component.props.field)
-          } else {
-            // No component means text input via chat - determine field from step
-            if (data.current_step === 1) {
-              setCurrentField('work_location')
-            }
-          }
-
-          setCurrentStep(data.current_step)
-          setCompleted(data.completed)
-          setLoadingState('success')
+          updateUIState(data)
         }
       }
     } catch (err) {
@@ -306,27 +293,12 @@ export default function PropalystChat() {
             setMessages(prev => [...prev, secondMessage])
 
             // Update UI with controls/component when second message appears
-            setCurrentComponent(data.component)
-            if (data.component?.props?.field) {
-              setCurrentField(data.component.props.field)
-            } else {
-              // No component means text input via chat - determine field from step
-              if (data.current_step === 1) {
-                setCurrentField('work_location')
-              } else if (data.current_step === 2) {
-                setCurrentField('has_kids')
-              } else if (data.current_step === 3) {
-                setCurrentField('commute_time_max')
-              } else if (data.current_step === 4) {
-                setCurrentField('property_type')
-              } else if (data.current_step === 5) {
-                setCurrentField('budget_max')
-              }
-            }
+            updateUIState(data)
 
-            setCurrentStep(data.current_step)
-            setCompleted(data.completed)
-            setLoadingState('success')
+            // Return focus to chat input after response
+            setTimeout(() => {
+              chatInputRef.current?.focus()
+            }, 100)
           }, 1500)
         } else {
           // Single message: show immediately with controls
@@ -338,34 +310,56 @@ export default function PropalystChat() {
           setMessages(prev => [...prev, ...newMessages])
 
           // Update UI immediately for single message
-          setCurrentComponent(data.component)
-          if (data.component?.props?.field) {
-            setCurrentField(data.component.props.field)
-          } else {
-            // No component means text input via chat - determine field from step
-            if (data.current_step === 1) {
-              setCurrentField('work_location')
-            } else if (data.current_step === 2) {
-              setCurrentField('has_kids')
-            } else if (data.current_step === 3) {
-              setCurrentField('commute_time_max')
-            } else if (data.current_step === 4) {
-              setCurrentField('property_type')
-            } else if (data.current_step === 5) {
-              setCurrentField('budget_max')
-            }
-          }
+          updateUIState(data)
 
-          setCurrentStep(data.current_step)
-          setCompleted(data.completed)
-          setLoadingState('success')
+          // Return focus to chat input after response
+          setTimeout(() => {
+            chatInputRef.current?.focus()
+          }, 100)
         }
       }
     } catch (err) {
       console.error('Failed to send answer:', err)
       setError(err instanceof Error ? err.message : 'Unknown error')
       setLoadingState('error')
+
+      // Return focus to chat input even on error
+      setTimeout(() => {
+        chatInputRef.current?.focus()
+      }, 100)
     }
+  }
+
+  /**
+   * Helper to update UI state from API response
+   */
+  const updateUIState = (data: any) => {
+    setCurrentComponent(data.component)
+
+    if (data.component?.props?.field) {
+      setCurrentField(data.component.props.field)
+    } else {
+      // No component means text input via chat - determine field from step
+      setCurrentField(determineFieldFromStep(data.current_step))
+    }
+
+    setCurrentStep(data.current_step)
+    setCompleted(data.completed)
+    setLoadingState('success')
+  }
+
+  /**
+   * Helper to determine field name from step number
+   */
+  const determineFieldFromStep = (step: number): string => {
+    const fieldMap: Record<number, string> = {
+      1: 'work_location',
+      2: 'has_kids',
+      3: 'commute_time_max',
+      4: 'property_type',
+      5: 'budget_max'
+    }
+    return fieldMap[step] || ''
   }
 
   /**
@@ -374,15 +368,6 @@ export default function PropalystChat() {
    */
   const handleChatSubmit = () => {
     if (chatInput.trim()) {
-      // Determine which field needs to be filled based on current state
-      // This maps to the router logic in backend
-      let field = currentField
-
-      // If no component is shown (text input via chat), determine field from step
-      if (!currentComponent && currentStep === 1) {
-        field = 'work_location'
-      }
-
       sendAnswer(chatInput.trim())
       setChatInput('')
 
@@ -421,260 +406,114 @@ export default function PropalystChat() {
   }
 
   return (
-    <motion.div
-      className="flex flex-col h-[700px] mx-auto"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{
-        opacity: 1,
-        scale: 1,
-        width: summary ? "80vw" : "896px" // 896px = max-w-4xl, then expand to 80vw
-      }}
-      transition={{
-        duration: 1.2,
-        delay: 0.5,
-        ease: [0, 0.71, 0.2, 1.01],
-        opacity: { duration: 1.5, ease: "easeInOut" },
-        width: { duration: 1.2, ease: [0.4, 0, 0.2, 1] } // Slower, more subtle cubic-bezier
-      }}
-    >
-      {/* Header with premium effects */}
-      <Card className="p-5 mb-4 bg-white/95 backdrop-blur-xl shadow-2xl border border-white/20 relative overflow-hidden">
-        {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+    <>
+      {/* Chat Messages Area - Scrolls with page content (NOT sticky) */}
+      <motion.div
+        className="flex flex-col w-full max-w-[896px] mx-auto mb-8 px-4"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{
+          opacity: 1,
+          scale: 1
+        }}
+        transition={{
+          duration: 1.2,
+          delay: 0.5,
+          ease: [0, 0.71, 0.2, 1.01],
+          opacity: { duration: 1.5, ease: "easeInOut" }
+        }}
+      >
+        {/* Header */}
+        <ChatHeader completed={completed} />
 
-        <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground shadow-lg">
-              <Bot className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Propalyst Assistant</h2>
-              <p className="text-sm text-gray-500">Let's find your ideal home</p>
-            </div>
-          </div>
-          {completed && (
-            <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-sm font-medium">Complete</span>
-            </div>
-          )}
-        </div>
-      </Card>
+        {/* Chat messages area with glassmorphism - Fixed height with internal scroll */}
+        <Card className="flex flex-col overflow-hidden bg-white/95 backdrop-blur-xl shadow-2xl border border-white/20 relative h-[600px] w-full max-w-[896px]">
+          <ScrollArea className="h-full p-6">
+            <div className="space-y-6 w-full max-w-full">
+              {/* Message history */}
+              {messages.map((msg, index) => (
+                <ChatMessage key={index} message={msg} />
+              ))}
 
-      {/* Chat area with glassmorphism */}
-      <Card className="flex-1 flex flex-col overflow-hidden bg-white/95 backdrop-blur-xl shadow-2xl border border-white/20 relative">
-        <ScrollArea className="flex-1 p-6">
-          <div className="space-y-6 w-full max-w-full">
-            {/* Message history */}
-            {messages.map((msg, index) => (
-              <ChatMessage key={index} message={msg} />
-            ))}
-
-            {/* Current component (inline with messages) - only show if component exists */}
-            {currentComponent && !completed && (
-              <div className="flex justify-start w-full">
-                <div className="w-full max-w-full overflow-hidden">
-                  <DynamicRenderer
-                    config={currentComponent}
-                    onSubmit={sendAnswer}
-                    onSelect={sendAnswer}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* If no component, show placeholder hint for chat input */}
-            {!currentComponent && !completed && loadingState !== 'loading' && (
-              <div className="flex justify-center py-2">
-                <div className="text-sm text-gray-400 italic">
-                  Type your answer in the chat box below...
-                </div>
-              </div>
-            )}
-
-            {/* Loading indicator */}
-            {loadingState === 'loading' && (
-              <div className="flex justify-start">
-                <div className="flex items-start gap-2 max-w-[75%]">
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground flex-shrink-0">
-                    <Bot className="w-5 h-5" />
-                  </div>
-                  <div className="bg-muted px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Error message */}
-            {error && (
-              <Card className="p-4 bg-red-50 border-red-200">
-                <div className="text-red-800 font-medium">Error</div>
-                <div className="text-sm text-red-600">{error}</div>
-              </Card>
-            )}
-
-            {/* Completion alert - fades out after 2.5 seconds */}
-            {completed && showCompletionAlert && (
-              <div className="flex justify-center animate-fade-out">
-                <div className="bg-gradient-to-r from-primary/20 to-accent/10 border border-primary rounded-2xl p-6 shadow-sm">
-                  <div className="text-center">
-                    <div className="text-2xl mb-2">🎉</div>
-                    <div className="text-gray-900 font-semibold mb-1">
-                      Perfect! We have everything we need
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      Analyzing the best areas for you...
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Summary textarea - shown after alert fades */}
-            {completed && !showCompletionAlert && (
-              <div className="w-full">
-                {summaryLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                      <span className="text-sm">Generating summary...</span>
-                    </div>
-                  </div>
-                ) : summary ? (
-                  <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Your Search Summary
-                    </label>
-                    <Textarea
-                      value={summary}
-                      readOnly
-                      className="w-full min-h-[100px] text-base text-gray-800 bg-gray-50 border-gray-300 resize-none focus:ring-0 focus:border-gray-300"
+              {/* Current component (inline with messages) - only show if component exists */}
+              {currentComponent && !completed && (
+                <div className="flex justify-start w-full">
+                  <div className="w-full max-w-full overflow-hidden">
+                    <DynamicRenderer
+                      config={currentComponent}
+                      onSubmit={sendAnswer}
+                      onSelect={sendAnswer}
                     />
                   </div>
-                ) : null}
+                </div>
+              )}
 
-                {/* Area Cards Loading Message */}
-                {areaCardsLoading && (
-                  <div className="flex items-center gap-3 text-gray-600 py-4">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                    <span className="text-sm font-medium">Loading areas relevant to your search...</span>
+              {/* If no component, show placeholder hint for chat input */}
+              {!currentComponent && !completed && loadingState !== 'loading' && (
+                <div className="flex justify-center py-2">
+                  <div className="text-sm text-gray-400 italic">
+                    Type your answer in the chat box below...
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Area Cards Grid */}
-                {showAreaCards && (
-                  <div className="py-4 w-full">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
-                      Recommended Areas
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full mx-auto">
-                      {/* Mock Data - Whitefield and surrounding areas */}
-                      <AreaCard
-                        areaName="Whitefield"
-                        image="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2053"
-                        childFriendlyScore={9}
-                        schoolsNearby={12}
-                        averageCommute="15-20 min"
-                        budgetRange="₹60K - ₹85K"
-                        highlights={["IT Hub", "Great Schools", "Metro Access"]}
-                      />
-                      <AreaCard
-                        areaName="Marathahalli"
-                        image="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075"
-                        childFriendlyScore={8}
-                        schoolsNearby={10}
-                        averageCommute="20-25 min"
-                        budgetRange="₹50K - ₹75K"
-                        highlights={["Good Connectivity", "Family Friendly", "Shopping"]}
-                      />
-                      <AreaCard
-                        areaName="Indiranagar"
-                        image="https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071"
-                        childFriendlyScore={7}
-                        schoolsNearby={8}
-                        averageCommute="25-30 min"
-                        budgetRange="₹70K - ₹90K"
-                        highlights={["Upscale Area", "Parks", "Cafes & Restaurants"]}
-                      />
-                      <AreaCard
-                        areaName="Brookefield"
-                        image="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070"
-                        childFriendlyScore={9}
-                        schoolsNearby={15}
-                        averageCommute="10-15 min"
-                        budgetRange="₹55K - ₹80K"
-                        highlights={["Close to Whitefield", "Quiet", "Premium Schools"]}
-                      />
-                      <AreaCard
-                        areaName="Koramangala"
-                        image="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070"
-                        childFriendlyScore={7}
-                        schoolsNearby={9}
-                        averageCommute="30-35 min"
-                        budgetRange="₹65K - ₹95K"
-                        highlights={["Vibrant", "Startups", "Nightlife"]}
-                      />
-                      <AreaCard
-                        areaName="HSR Layout"
-                        image="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=2074"
-                        childFriendlyScore={8}
-                        schoolsNearby={11}
-                        averageCommute="25-30 min"
-                        budgetRange="₹55K - ₹80K"
-                        highlights={["Parks", "Shopping", "Well-planned"]}
-                      />
+              {/* Loading indicator */}
+              {loadingState === 'loading' && (
+                <div className="flex justify-start">
+                  <div className="flex items-start gap-2 max-w-[75%]">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground flex-shrink-0">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div className="bg-muted px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* Scroll anchor */}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
+              {/* Error message */}
+              {error && (
+                <Card className="p-4 bg-red-50 border-red-200">
+                  <div className="text-red-800 font-medium">Error</div>
+                  <div className="text-sm text-red-600">{error}</div>
+                </Card>
+              )}
 
-        {/* Persistent chat input - always visible with premium styling */}
-        <div className="p-4 border-t border-gray-200/50 bg-gradient-to-b from-white/80 to-white/95 backdrop-blur-lg">
-          <div className="relative flex items-center bg-white/90 rounded-xl shadow-md focus-within:ring-2 focus-within:ring-primary/40 transition-all duration-200">
-            <Input
-              ref={chatInputRef}
-              type="text"
-              placeholder={completed ? "Refine your search..." : "Type your message..."}
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={loadingState === 'loading'}
-              className="flex-1 h-12 text-base border-0 bg-transparent rounded-xl focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 pr-20"
-            />
-            <Button
-              onClick={handleChatSubmit}
-              disabled={!chatInput.trim() || loadingState === 'loading'}
-              className="absolute right-1.5 h-9 px-4 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 text-primary-foreground font-semibold transition-all duration-300 hover:scale-[1.02] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 rounded-lg"
-            >
-              <Send className="w-4 h-4" />
-              <span>Send</span>
-            </Button>
-          </div>
-        </div>
-      </Card>
-    </motion.div>
+              {/* Scroll anchor */}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+        </Card>
+      </motion.div>
+
+      {/* Floating Chat Input Box - Sticky at bottom, floats over area cards */}
+      <motion.div
+        className="fixed bottom-8 left-0 right-0 z-50 px-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{
+          opacity: 1,
+          y: 0
+        }}
+        transition={{
+          duration: 1.2,
+          ease: [0.4, 0, 0.2, 1]
+        }}
+      >
+        <ChatInput
+          value={chatInput}
+          onChange={setChatInput}
+          onSubmit={handleChatSubmit}
+          onKeyPress={handleKeyPress}
+          loadingState={loadingState}
+          completed={completed}
+          inputRef={chatInputRef}
+        />
+      </motion.div>
+    </>
   )
 }
