@@ -18,7 +18,6 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { motion } from 'framer-motion'
 import DynamicRenderer from '@/components/DynamicRenderer'
 import ChatMessage from './ChatMessage'
-import ChatHeader from './ChatHeader'
 import ChatInput from './ChatInput'
 import LoadingIndicator from './LoadingIndicator'
 import { PropalystService, Area } from '@/lib/services'
@@ -109,14 +108,7 @@ export default function PropalystChat({
       // Set loading state to show loading indicator
       setLoadingState('loading')
 
-      // Fetch summary after 500ms
-      const summaryTimer = setTimeout(() => {
-        fetchSummary()
-      }, 500)
-
-      return () => {
-        clearTimeout(summaryTimer)
-      }
+      fetchSummary()
     }
   }, [completed, summary])
 
@@ -230,18 +222,16 @@ export default function PropalystChat({
           setMessages([firstMessage])
           // Keep loading state active until second message
 
-          // Show second message and controls after 1.5 second delay
-          setTimeout(() => {
-            const secondMessage = {
-              role: 'agent' as const,
-              content: messageParts[1].trim(),
-              timestamp: new Date()
-            }
-            setMessages(prev => [...prev, secondMessage])
+          const secondMessage = {
+            role: 'agent' as const,
+            content: messageParts[1].trim(),
+            timestamp: new Date()
+          }
+          setMessages(prev => [...prev, secondMessage])
 
-            // Update UI with controls/component when second message appears
-            updateUIState(data)
-          }, 1500)
+          // Update UI with controls/component when second message appears
+          updateUIState(data)
+
         } else {
           // Single message: show immediately with controls
           setMessages([{
@@ -300,22 +290,22 @@ export default function PropalystChat({
           // Keep loading state active until second message
 
           // Show second message and controls after 1.5 second delay
+
+          const secondMessage = {
+            role: 'agent' as const,
+            content: messageParts[1].trim(),
+            timestamp: new Date()
+          }
+          setMessages(prev => [...prev, secondMessage])
+
+          // Update UI with controls/component when second message appears
+          updateUIState(data)
+
+          // Return focus to chat input after response
           setTimeout(() => {
-            const secondMessage = {
-              role: 'agent' as const,
-              content: messageParts[1].trim(),
-              timestamp: new Date()
-            }
-            setMessages(prev => [...prev, secondMessage])
+            chatInputRef.current?.focus()
+          }, 100)
 
-            // Update UI with controls/component when second message appears
-            updateUIState(data)
-
-            // Return focus to chat input after response
-            setTimeout(() => {
-              chatInputRef.current?.focus()
-            }, 100)
-          }, 1500)
         } else {
           // Single message: show immediately with controls
           const newMessages = messageParts.map(content => ({
@@ -438,11 +428,8 @@ export default function PropalystChat({
           opacity: { duration: 1.5, ease: "easeInOut" }
         }}
       >
-        {/* Header */}
-        <ChatHeader completed={completed} />
-
         {/* Chat messages area with glassmorphism - Fixed height with internal scroll */}
-        <Card className="flex flex-col overflow-hidden bg-white/95 backdrop-blur-xl shadow-2xl border border-white/20 relative h-[600px] w-full max-w-[896px]">
+        <Card className="flex flex-col overflow-hidden bg-white/95 backdrop-blur-xl shadow-2xl border border-white/20 relative h-[calc(100vh-300px)] w-full max-w-[896px]">
           <ScrollArea className="h-full p-6">
             <div className="space-y-6 w-full max-w-full">
               {/* Message history */}

@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo, useState, useEffect, useRef } from 'react'
-import PropalystChat from '@/components/propalyst/PropalystChat'
-import RecommendedSection from '@/components/propalyst/RecommendedSection'
+import PropalystChat from '@/app/propalyst/propalyst/PropalystChat'
+import RecommendedSection from '@/app/propalyst/propalyst/RecommendedSection'
 import { Area } from '@/lib/services'
 
 // High-end residential property background images
