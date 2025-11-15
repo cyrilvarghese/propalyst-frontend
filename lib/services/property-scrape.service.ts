@@ -74,6 +74,8 @@ export interface MagicBricksProperty {
     title: string // e.g., "3 BHK Flat for Sale in Indira Nagar, Bangalore"
     society_name?: string // e.g., "Century Regalia"
     society_url?: string // e.g., "https://www.magicbricks.com/century-regalia-indira-nagar-bangalore-pdpld-4d4235343233353303"
+    area?: string // e.g., "2375 sqft"
+    carpet_area?: string // e.g., "2000 sqft"
     super_area?: string // e.g., "2375 sqft"
     status?: string // e.g., "Poss. by Apr '29"
     floor?: string // e.g., "5 out of 11"
@@ -86,6 +88,7 @@ export interface MagicBricksProperty {
     bathroom?: string // e.g., "3"
     balcony?: string // e.g., "1"
     description: string
+    description2?: string // e.g., "Description 2"
     price?: string // e.g., "₹5.34 Cr"
     price_per_sqft?: string // e.g., "₹22526 per sqft"
     property_url: string

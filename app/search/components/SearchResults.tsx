@@ -15,143 +15,13 @@
 import { Card } from '@/components/ui/card'
 import ResultCard from './ResultCard'
 import JsonResultCard from './JsonResultCard'
-import { PropertySearchService, PropertyResult, QueryOptimizerService, TavilyPropertySearchService } from '@/lib/services'
-import { SerpProperty } from '@/lib/services/serp-property-search.service'
-import { TavilyProperty } from '@/lib/services/tavily-property-search.service'
-
-// Union type for all property types
-type Property = SerpProperty | TavilyProperty
+import { QueryOptimizerService } from '@/lib/services'
+import { fetchProperties } from '@/lib/api/property-search'
 
 interface SearchResultsProps {
   query: string
   sources: string
   provider: string
-}
-
-/**
- * Deduplicate properties based on URL
- * Keeps the first occurrence of each unique URL
- */
-function deduplicatePropertiesByUrl<T extends { url?: string }>(properties: T[]): T[] {
-  const seenUrls = new Set<string>()
-
-  return properties.filter(property => {
-    if (!property.url) return true // Include properties without URLs
-
-    const normalizedUrl = property.url.toLowerCase().replace(/\/$/, '')
-    if (seenUrls.has(normalizedUrl)) return false
-
-    seenUrls.add(normalizedUrl)
-    return true
-  })
-}
-
-/**
- * Fetch properties using Python backend (FastAPI + LangChain) or Tavily
- */
-async function fetchProperties(query: string, sources: string, provider: string): Promise<Property[] | any[]> {
-  console.log('🚀 fetchProperties called with:', { query, sources, provider })
-
-  // Don't call API if query is missing
-  // Note: sources is now optional - if empty, search across all domains
-  if (!query || !provider) {
-    console.log('⏭️  Skipping API call - missing query or provider')
-    return []
-  }
-
-  try {
-    // Check if we should use Tavily
-    if (provider === 'tavily') {
-      console.log('📡 Using Tavily flow: Query Optimizer → Tavily Search')
-
-      // Step 1: Optimize query using Gemini
-      const optimizer = new QueryOptimizerService()
-      const optimizedQuery = await optimizer.optimize(query)
-      console.log('🎯 Query optimized:', optimizedQuery)
-
-      // Step 2: Search with Tavily using optimized query
-      const tavilyService = new TavilyPropertySearchService()
-      const rawResults = await tavilyService.search(optimizedQuery, sources)
-
-      console.log('✅ Tavily search completed, results count:', rawResults.length)
-      console.log('📄 Returning RAW Tavily results (not parsed)')
-
-      // Return raw results for JSON display
-      return rawResults
-
-    } else {
-      // Use Python backend for other providers (openai, gemini)
-      console.log('📡 About to call Python Backend (PropertySearchService)')
-
-      const response = await PropertySearchService.search({
-        query,
-        sources: sources || '', // Send empty string if no sources
-        provider,
-      })
-
-      console.log('✅ Backend search completed, results count:', response.results.length)
-
-      // Transform backend response to Property format
-      const properties: Property[] = response.results.map((result: PropertyResult, index: number) => {
-        // Extract bedrooms from property_type
-        const bhkMatch = result.property_type?.match(/(\d+)BHK/i)
-        const bedrooms = bhkMatch ? parseInt(bhkMatch[1]) : 2
-
-        // Estimate bathrooms based on bedrooms
-        const bathrooms = bedrooms >= 3 ? 2 : 1
-
-        // Parse price from string to number
-        let price = 0
-        let propertyFor: 'rent' | 'sale' = 'rent'
-
-        if (result.price) {
-          const priceMatch = result.price.match(/(\d+(?:\.\d+)?)/)
-          if (priceMatch) {
-            const priceValue = parseFloat(priceMatch[1])
-            // If price contains "Cr" or "crore", it's a sale
-            if (result.price.toLowerCase().includes('cr') || result.price.toLowerCase().includes('crore')) {
-              price = priceValue * 10000000 // Convert crores to rupees
-              propertyFor = 'sale'
-            } else if (result.price.toLowerCase().includes('lakh')) {
-              price = priceValue * 100000 // Convert lakhs to rupees
-              propertyFor = price > 500000 ? 'sale' : 'rent'
-            } else {
-              price = priceValue // Assume it's already in rupees
-            }
-          }
-        }
-
-        // Extract area from snippet if available
-        const areaMatch = result.snippet?.match(/(\d+)\s*(?:sq\.?\s*ft|sqft|square feet)/i)
-        const area = areaMatch ? parseInt(areaMatch[1]) : bedrooms * 500
-
-        // Use placeholder image
-        const imageUrl = `https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&sig=${index}`
-
-        return {
-          id: result.url || `property-${index}-${Date.now()}`,
-          title: result.title,
-          location: result.location || 'Location not specified',
-          price: price || (propertyFor === 'sale' ? 40000000 : 25000),
-          bedrooms,
-          bathrooms,
-          area,
-          imageUrl,
-          description: result.snippet || 'No description available',
-          propertyFor,
-          url: result.url,
-          source: result.source
-        }
-      })
-
-      return properties
-    }
-
-  } catch (error: any) {
-    console.error('❌ Error fetching properties:', error.message)
-    // Return empty array on error - component will show "No properties found"
-    return []
-  }
 }
 
 /**
@@ -218,10 +88,26 @@ export default async function SearchResults({ query, sources, provider }: Search
 
   // ✨ This is the magic of Server Components!
   // We can use 'await' directly - no useEffect, no useState needed!
-  const results = await fetchProperties(query, sources, provider)
+  let results = await fetchProperties(query, sources || undefined, provider)
 
   // Determine if we're showing raw JSON or parsed properties
   const isTavilyRaw = provider === 'tavily'
+
+  // Client-side filtering by sources (backend doesn't filter)
+  // Parse sources string into array and filter results
+  if (sources && sources.trim().length > 0) {
+    const sourcesArray = sources.split(',').map(s => s.trim().toLowerCase())
+    const filteredResults = results.filter((result: any) => {
+      // Check if result has a source property and it matches selected sources
+      return result.source && sourcesArray.includes(result.source.toLowerCase())
+    })
+
+    // Only use filtered results if we actually found matches
+    if (filteredResults.length > 0) {
+      results = filteredResults
+    }
+  }
+
 
   // For Tavily, optimize the query to show optimized version instead of original
   let displayQuery = query

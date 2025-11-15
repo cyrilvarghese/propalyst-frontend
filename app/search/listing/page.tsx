@@ -8,273 +8,204 @@
  * Why Client Component?
  * - Needs to handle async data fetching (useEffect, useState)
  * - Needs to manage loading and error states
- * - Uses custom hook for batch fetching
+ * - Uses custom hooks for batch fetching and filtering
+ * 
+ * Refactored with React Best Practices:
+ * - Extracted constants to separate file
+ * - Extracted types to separate file
+ * - Extracted custom hooks for state management
+ * - Extracted presentational components
+ * - Main page focuses on composition
  */
 
 'use client'
 
-import { useMemo, Fragment, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Slider } from '@/components/ui/slider'
-import CompactPropertyCard from './components/CompactPropertyCard'
-import CompactMagicBricksCard from './components/CompactMagicBricksCard'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { usePropertyBatch } from './hooks/usePropertyBatch'
-import { ScrapedProperty, MagicBricksProperty } from '@/lib/services/property-scrape.service'
 
+// Hooks
+import { usePropertyBatch } from './hooks/usePropertyBatch'
+import { usePropertyFilters } from './hooks/usePropertyFilters'
+import { useCacheReset } from './hooks/useCacheReset'
+
+// Components
+import { ListingHeader } from './components/ListingHeader'
+import { PropertyFilters } from './components/PropertyFilters'
+import { PropertyGrid } from './components/PropertyGrid'
+import { NoUrlState, LoadingState, ErrorState } from './components/EmptyStates'
+
+// Types
+import { PROPERTY_SOURCES } from './constants/listing.constants'
 
 /**
  * Main Listing Page Component
+ * 
+ * LEARNING: Composition-Based Architecture
+ * - Main component focuses on layout and composition
+ * - All logic is delegated to custom hooks
+ * - All UI rendering is delegated to components
+ * - Main file is easy to understand at a glance
  */
 export default function ListingPage() {
+    // ========================================================================
+    // SETUP
+    // ========================================================================
+
+    const router = useRouter()
     const searchParams = useSearchParams()
+
+    // Get URL from query params
     const url = searchParams.get('url') || ''
     const origQuery = searchParams.get('orig_query') || undefined
-
-    // Decode URL if it exists
     const decodedUrl = url ? decodeURIComponent(url) : ''
 
-    // Use batch fetch hook
-    const { properties, isLoading, error, isComplete, apiCallsMade, source, relevanceScore, relevanceReason } = usePropertyBatch(decodedUrl, origQuery)
+    // ========================================================================
+    // FETCH DATA
+    // ========================================================================
 
-    // Check if properties are MagicBricks type
-    const isMagicBricks = source === 'magicbricks'
+    /**
+     * usePropertyBatch: Fetches properties from backend
+     * 
+     * Returns:
+     * - properties: Array of fetched properties
+     * - isLoading: Is fetch in progress?
+     * - error: Error if fetch failed
+     * - isComplete: Has fetch completed?
+     * - source: 'magicbricks' or 'squareyards'
+     * - (other metadata fields)
+     */
+    const { properties, isLoading, error, isComplete, source } = usePropertyBatch(
+        decodedUrl,
+        origQuery
+    )
 
-    // Relevance threshold slider state
-    const [relevanceThreshold, setRelevanceThreshold] = useState([5])
+    // ========================================================================
+    // FILTER & GROUP PROPERTIES
+    // ========================================================================
 
-    // Group properties by relevance (dynamic threshold)
-    // Both MagicBricks and SquareYards use per-property relevance scores
-    const groupedProperties = useMemo(() => {
-        // Filter properties by relevance score
-        const allProps = properties as (ScrapedProperty | MagicBricksProperty)[]
-        const threshold = relevanceThreshold[0]
-        const mostRelevant = allProps.filter(p => (p.relevance_score ?? 0) >= threshold)
-        const others = allProps.filter(p => (p.relevance_score ?? 0) < threshold)
+    /**
+     * usePropertyFilters: Manages all filtering logic
+     * 
+     * Returns:
+     * - filters: Current filter values
+     * - costBounds: Slider bounds for cost
+     * - areaBounds: Slider bounds for area
+     * - groupedProperties: Filtered and grouped properties
+     * - updateSearchQuery, updateCostRange, etc.: Update callbacks
+     */
+    const {
+        filters,
+        costBounds,
+        areaBounds,
+        groupedProperties,
+        updateSearchQuery,
+        updateCostRange,
+        updateAreaRange,
+        updateRelevanceThreshold,
+    } = usePropertyFilters(properties)
 
-        // Sort each group by relevance score descending
-        const sortByRelevance = (a: ScrapedProperty | MagicBricksProperty, b: ScrapedProperty | MagicBricksProperty) => {
-            const scoreA = a.relevance_score ?? -1
-            const scoreB = b.relevance_score ?? -1
-            return scoreB - scoreA
-        }
+    // ========================================================================
+    // CACHE MANAGEMENT
+    // ========================================================================
 
-        return {
-            mostRelevant: mostRelevant.sort(sortByRelevance),
-            others: others.sort(sortByRelevance)
-        }
-    }, [properties, relevanceThreshold])
+    /**
+     * useCacheReset: Manages cache deletion
+     * 
+     * Returns:
+     * - cacheState: { isDeleting, success, error }
+     * - resetCache: Function to trigger reset
+     */
+    const { cacheState, resetCache } = useCacheReset(decodedUrl)
+
+    // ========================================================================
+    // DETERMINE PROPERTY SOURCE
+    // ========================================================================
+
+    /**
+     * Check if properties are from MagicBricks
+     * Used to determine which card component to render
+     */
+    const isMagicBricks = source === PROPERTY_SOURCES.MAGIC_BRICKS
+
+    // ========================================================================
+    // RENDER
+    // ========================================================================
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
             <div className="max-w-7xl mx-auto px-4">
                 {/* Back Button */}
-                <Link
-                    href="/search"
+                <Button
+                    variant="outline"
+                    onClick={(e) => {
+                        e.preventDefault()
+                        router.back()
+                    }}
                     className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Back to Search</span>
-                </Link>
+                </Button>
 
-                {/* No URL State */}
-                {!url && (
-                    <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
-                        <div className="text-center py-12">
-                            <p className="text-gray-600">No URL provided</p>
-                            <Link
-                                href="/search"
-                                className="text-indigo-600 hover:text-indigo-700 mt-4 inline-block"
-                            >
-                                Go back to search
-                            </Link>
-                        </div>
-                    </Card>
-                )}
+                {/* ============================================================ */}
+                {/* STATE: No URL provided */}
+                {/* ============================================================ */}
+                {!url && <NoUrlState />}
 
-                {/* Loading State */}
+                {/* ============================================================ */}
+                {/* STATE: Loading */}
+                {/* ============================================================ */}
                 {url && isLoading && properties.length === 0 && (
-                    <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
-                        <div className="text-center py-12">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                            <p className="text-gray-600 mt-4">Scraping property listings...</p>
-                        </div>
-                    </Card>
+                    <LoadingState message="Scraping property listings..." />
                 )}
 
-                {/* Error State */}
-                {error && (
-                    <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
-                        <div className="text-center py-12">
-                            <div className="text-red-400 text-5xl mb-4">⚠️</div>
-                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                Error loading properties
-                            </h3>
-                            <p className="text-gray-500">{error.message}</p>
-                        </div>
-                    </Card>
-                )}
+                {/* ============================================================ */}
+                {/* STATE: Error */}
+                {/* ============================================================ */}
+                {error && <ErrorState error={error} />}
 
-                {/* Properties Display */}
+                {/* ============================================================ */}
+                {/* STATE: Display properties */}
+                {/* ============================================================ */}
                 {url && !error && (properties.length > 0 || isComplete) && (
                     <div className="space-y-6">
-                        {/* Header Card */}
-                        <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">
-                                        Property Listings
-                                    </h2>
-                                    {properties.length > 0 && origQuery ? (
-                                        <p className="text-xl text-gray-500 mt-1">
-                                            Found {properties.length} {properties.length === 1 ? 'property' : 'properties'} matching "{decodeURIComponent(origQuery)}"
-                                        </p>
-                                    ) : (
-                                        <p className="text-sm text-gray-600 mt-1">
-                                            No properties found for the query "{decodeURIComponent(origQuery || '')}"
-                                        </p>
-                                    )}
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        <a href={decodeURIComponent(url || '')} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 hover:underline break-all cursor-pointer">{decodeURIComponent(url || '')}</a> URL
-                                    </p>
+                        {/* Sticky Header Section */}
+                        <div className="sticky top-0 z-50 bg-gradient-to-br from-gray-50 to-gray-100 pb-6 -mx-4 px-4 pt-2 -mt-2">
+                            {/* Header with title and reset button */}
+                            <ListingHeader
+                                url={url}
+                                origQuery={origQuery}
+                                propertyCount={properties.length}
+                                isLoading={isLoading}
+                                cacheState={cacheState}
+                                onResetCache={resetCache}
+                            />
 
-                                    {isLoading && (
-                                        <div className="text-xs text-gray-600 bg-indigo-100 px-3 py-1.5 rounded-full font-medium">
-                                            Loading...
-                                        </div>
-                                    )}
+                            {/* Filter controls - only show if we have properties */}
+                            {properties.length > 0 && (
+                                <PropertyFilters
+                                    filters={filters}
+                                    costBounds={costBounds}
+                                    areaBounds={areaBounds}
+                                    groupedProperties={groupedProperties}
+                                    onSearchChange={updateSearchQuery}
+                                    onCostChange={updateCostRange}
+                                    onAreaChange={updateAreaRange}
+                                    onRelevanceChange={updateRelevanceThreshold}
+                                />
+                            )}
+                        </div>
 
-                                </div>
-                            </div>
-                        </Card>
-
-                        {/* Relevance Filter Control */}
-                        {properties.length > 0 && (
-                            <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="text-sm font-semibold text-gray-900">
-                                                Relevance Filter
-                                            </h3>
-                                            <p className="text-xs text-gray-500 mt-0.5">
-                                                Show properties with score ≥ {relevanceThreshold[0]}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="text-xs">
-                                                {groupedProperties.mostRelevant.length} / {properties.length}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <span className="text-xs font-medium text-gray-600 w-8">0</span>
-                                        <Slider
-                                            value={relevanceThreshold}
-                                            onValueChange={setRelevanceThreshold}
-                                            min={0}
-                                            max={10}
-                                            step={1}
-                                            className="flex-1"
-                                        />
-                                        <span className="text-xs font-medium text-gray-600 w-8">10</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs text-gray-400">
-                                        <span>All</span>
-                                        <span>Moderate</span>
-                                        <span>High</span>
-                                    </div>
-                                </div>
-                            </Card>
-                        )}
-
-                        {/* Property Cards - Grouped by Relevance */}
-                        {(groupedProperties.mostRelevant.length > 0 || groupedProperties.others.length > 0) ? (
-                            <div className="space-y-6">
-                                {/* Most Relevant Section */}
-                                {groupedProperties.mostRelevant.length > 0 && (
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <h3 className="text-lg font-semibold text-gray-900">
-                                                Matching Properties (Score ≥ {relevanceThreshold[0]})
-                                            </h3>
-                                            <Badge className="bg-green-500 text-white text-xs">
-                                                {groupedProperties.mostRelevant.length}
-                                            </Badge>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {groupedProperties.mostRelevant.map((property, index) => {
-                                                const key = typeof property.property_url === 'string'
-                                                    ? property.property_url
-                                                    : `most-relevant-${index}`;
-                                                return (
-                                                    <Fragment key={key}>
-                                                        {isMagicBricks ? (
-                                                            <CompactMagicBricksCard
-                                                                property={property as MagicBricksProperty}
-                                                            />
-                                                        ) : (
-                                                            <CompactPropertyCard
-                                                                property={property as ScrapedProperty}
-                                                            />
-                                                        )}
-                                                    </Fragment>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Others Section */}
-                                {groupedProperties.others.length > 0 && (
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <h3 className="text-lg font-semibold text-gray-700">
-                                                Others (Score &lt; {relevanceThreshold[0]})
-                                            </h3>
-                                            <Badge variant="secondary" className="text-xs">
-                                                {groupedProperties.others.length}
-                                            </Badge>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {groupedProperties.others.map((property, index) => {
-                                                const key = typeof property.property_url === 'string'
-                                                    ? property.property_url
-                                                    : `others-${index}`;
-                                                return (
-                                                    <Fragment key={key}>
-                                                        {isMagicBricks ? (
-                                                            <CompactMagicBricksCard
-                                                                property={property as MagicBricksProperty}
-                                                            />
-                                                        ) : (
-                                                            <CompactPropertyCard
-                                                                property={property as ScrapedProperty}
-                                                            />
-                                                        )}
-                                                    </Fragment>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ) : isComplete ? (
-                            <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
-                                <div className="text-center py-12">
-                                    <div className="text-gray-400 text-5xl mb-4">🏠</div>
-                                    <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                        No properties found
-                                    </h3>
-                                    <p className="text-gray-500">
-                                        The URL did not return any property listings
-                                    </p>
-                                </div>
-                            </Card>
-                        ) : null}
+                        {/* Property grid or empty state */}
+                        <PropertyGrid
+                            groupedProperties={groupedProperties}
+                            isMagicBricks={isMagicBricks}
+                            relevanceThreshold={filters.relevanceThreshold}
+                            isComplete={isComplete}
+                        />
                     </div>
                 )}
             </div>

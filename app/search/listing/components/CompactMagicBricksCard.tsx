@@ -82,9 +82,19 @@ export default function CompactMagicBricksCard({ property }: CompactMagicBricksC
     const bhkMatch = property.title.match(/(\d+)\s*BHK/i)
     const bhk = bhkMatch ? bhkMatch[1] + ' BHK' : ''
 
+    // Determine which area field to show (priority: area > carpet_area > super_area)
+    const areaValue = property.area || property.carpet_area || property.super_area
+    const areaLabel = property.area ? 'Area' : property.carpet_area ? 'Carpet Area' : 'Super Area'
+
     return (
         <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-indigo-300">
             <div className="p-3 space-y-2">
+                {/* Posted Date - Top Left */}
+                {property.posted_date && (
+                    <p className="text-xs text-gray-500 mb-1">
+                        Posted: {property.posted_date}
+                    </p>
+                )}
                 {/* Header: Title and Price */}
                 <div className="space-y-1">
                     <div className="flex items-start justify-between gap-2">
@@ -127,19 +137,19 @@ export default function CompactMagicBricksCard({ property }: CompactMagicBricksC
 
                 {/* Key Features - Always Visible */}
                 <div className="flex flex-wrap gap-1">
-                    {property.super_area && (
+                    {areaValue && (
                         <Popover>
                             <PopoverTrigger asChild>
                                 <span className="inline-flex">
                                     <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 cursor-help">
-                                        📐 {property.super_area}
+                                        📐 {areaValue}
                                     </Badge>
                                 </span>
                             </PopoverTrigger>
                             <PopoverContent className="w-64" align="start">
                                 <div className="text-sm">
-                                    <p className="font-semibold mb-1">Super Area</p>
-                                    <p className="text-gray-600">{property.super_area}</p>
+                                    <p className="font-semibold mb-1">{areaLabel}</p>
+                                    <p className="text-gray-600">{areaValue}</p>
                                     {property.price_per_sqft && (
                                         <p className="text-gray-500 text-xs mt-1">
                                             {property.price_per_sqft}
@@ -212,11 +222,10 @@ export default function CompactMagicBricksCard({ property }: CompactMagicBricksC
                 {isExpanded && (
                     <div className="space-y-2 pt-2 border-t border-gray-200">
                         {/* Description */}
-                        {property.description && (
-                            <p className="text-xs text-gray-700 leading-relaxed">
-                                {property.description}
-                            </p>
-                        )}
+                        {<p className="text-xs text-gray-700 leading-relaxed"> 
+                            {property.description || property.description2 || 'No description'}
+                        </p>
+                        }
 
                         {/* All Features with Icons */}
                         <div className="grid grid-cols-2 gap-2 text-xs">

@@ -9,6 +9,7 @@
  */
 
 import { tavily } from '@tavily/core'
+import { unstable_cache } from 'next/cache'
 
 const TAVILY_API_KEY = process.env.NEXT_PUBLIC_TAVILY_API_KEY || process.env.TAVILY_API_KEY
 
@@ -44,6 +45,32 @@ interface TavilySearchResponse {
     results: TavilySearchResult[]
     query: string
 }
+
+/**
+ * Internal function to call Tavily API (no caching)
+ */
+async function _callTavilyAPI(query: string, searchOptions: any): Promise<TavilySearchResponse> {
+    if (!TAVILY_API_KEY) {
+        throw new Error('TAVILY_API_KEY not configured. Please add NEXT_PUBLIC_TAVILY_API_KEY to your .env.local file')
+    }
+
+    const tavilyClient = tavily({ apiKey: TAVILY_API_KEY })
+    return await tavilyClient.search(query, searchOptions)
+}
+
+/**
+ * Cached Tavily API call with revalidation
+ */
+const cachedTavilySearch = unstable_cache(
+    async (query: string, sources: string | undefined, searchOptions: any) => {
+        return await _callTavilyAPI(query, searchOptions)
+    },
+    ['tavily-search'], // Cache key prefix
+    {
+        tags: ['tavily', 'property-search'],
+        revalidate: 3600, // Revalidate after 1 hour (3600 seconds)
+    }
+)
 
 /**
  * Tavily Property Search Service
@@ -92,22 +119,22 @@ export class TavilyPropertySearchService {
     private async tavilyApiSearch(query: string, sources?: string): Promise<TavilySearchResponse> {
         console.log(`[TavilyPropertySearch:${this.searchId}] 🌐 Calling Tavily API`)
 
-        // Build domain list for filtering (if sources specified)
-        let includeDomains: string[] | undefined
-        if (sources) {
-            const sourcesList = sources.split(',').map(s => s.trim())
-            const domainMap: Record<string, string> = {
-                'magicbricks': 'magicbricks.com',
-                'housing': 'housing.com',
-                '99acres': '99acres.com',
-                'nobroker': 'nobroker.com',
-                'commonfloor': 'commonfloor.com',
-                'squareyards': 'squareyards.com'
-            }
-            includeDomains = sourcesList
-                .map(s => domainMap[s.toLowerCase()] || `${s}.com`)
-                .filter(Boolean)
-        }
+        // // Build domain list for filtering (if sources specified)
+        // let includeDomains: string[] | undefined
+        // if (sources) {
+        //     const sourcesList = sources.split(',').map(s => s.trim())
+        //     const domainMap: Record<string, string> = {
+        //         'magicbricks': 'magicbricks.com',
+        //         'housing': 'housing.com',
+        //         '99acres': '99acres.com',
+        //         'nobroker': 'nobroker.com',
+        //         'commonfloor': 'commonfloor.com',
+        //         'squareyards': 'squareyards.com'
+        //     }
+        //     includeDomains = sourcesList
+        //         .map(s => domainMap[s.toLowerCase()] || `${s}.com`)
+        //         .filter(Boolean)
+        // }
 
         // Build search options object
         // Note: Tavily JS SDK uses camelCase parameter names
@@ -121,21 +148,21 @@ export class TavilyPropertySearchService {
         }
 
         // Add domain filtering if sources specified
-        if (includeDomains && includeDomains.length > 0) {
-            searchOptions.includeDomains = includeDomains
-            console.log(`[TavilyPropertySearch:${this.searchId}] 🎯 Filtering domains:`, includeDomains)
-        } else {
-            console.log(`[TavilyPropertySearch:${this.searchId}] 🌍 Searching all domains`)
-        }
+        // if (includeDomains && includeDomains.length > 0) {
+        //     searchOptions.includeDomains = includeDomains
+        //     console.log(`[TavilyPropertySearch:${this.searchId}] 🎯 Filtering domains:`, includeDomains)
+        // } else {
+        console.log(`[TavilyPropertySearch:${this.searchId}] 🌍 Searching all domains`)
+        // }
 
-        // Call Tavily with query as first param, options as second
-        const response = await this.tavilyClient.search(query, searchOptions)
+        // Call cached Tavily API
+        const response = await cachedTavilySearch(query, sources, searchOptions)
 
         console.log(`[TavilyPropertySearch:${this.searchId}] 📝 Received ${response.results?.length || 0} results`)
         return response
     }
 
-    
+
 }
 
 /**
