@@ -133,25 +133,52 @@ export const INITIAL_CACHE_STATE: CacheResetState = {
 // ============================================================================
 
 /**
- * Properties grouped by relevance score
+ * Date-based sub-grouping within relevance groups
+ */
+export interface DateGroupedProperties {
+    /** Properties posted today (within hours) */
+    today: PropertyType[]
+
+    /** Properties posted this week (within last 7 days) */
+    thisWeek: PropertyType[]
+
+    /** Properties posted this month (but not this week) */
+    thisMonth: PropertyType[]
+
+    /** Properties posted in previous months */
+    previousMonths: PropertyType[]
+}
+
+/**
+ * Properties grouped by relevance score, then by date
  * 
  * This structure separates high-scoring properties from others,
- * making it easy to render them in different sections.
+ * and further groups them by posting date.
  */
 export interface GroupedProperties {
-    /** Properties meeting the relevance threshold */
-    mostRelevant: PropertyType[]
+    /** Properties meeting the relevance threshold, grouped by date */
+    mostRelevant: DateGroupedProperties
 
-    /** Properties below the relevance threshold */
-    others: PropertyType[]
+    /** Properties below the relevance threshold, grouped by date */
+    others: DateGroupedProperties
 }
 
 /**
  * Empty grouped properties (no properties loaded yet)
  */
 export const EMPTY_GROUPED_PROPERTIES: GroupedProperties = {
-    mostRelevant: [],
-    others: [],
+    mostRelevant: {
+        today: [],
+        thisWeek: [],
+        thisMonth: [],
+        previousMonths: [],
+    },
+    others: {
+        today: [],
+        thisWeek: [],
+        thisMonth: [],
+        previousMonths: [],
+    },
 }
 
 // ============================================================================

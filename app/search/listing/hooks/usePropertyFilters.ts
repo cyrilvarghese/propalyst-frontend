@@ -13,6 +13,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { extractPrice, extractArea } from '../utils/property-utils'
+import { MagicBricksProperty } from '@/lib/services/property-scrape.service'
 import {
     PropertyType,
     PropertyFilters,
@@ -21,7 +22,6 @@ import {
     UsePropertyFiltersReturn,
     DEFAULT_FILTERS,
     EMPTY_GROUPED_PROPERTIES,
-    MagicBricksProperty,
 } from '../types/listing.types'
 import {
     DEFAULT_MIN_COST_CRORES,
@@ -196,7 +196,60 @@ export function usePropertyFilters(properties: PropertyType[]): UsePropertyFilte
     // ========================================================================
 
     /**
-     * Filter properties and group by relevance
+     * Helper function to categorize property by date string
+     * Returns 'today', 'thisWeek', 'thisMonth', or 'previousMonths'
+     */
+    const getDateCategory = (property: PropertyType): 'today' | 'thisWeek' | 'thisMonth' | 'previousMonths' => {
+        const mbProperty = property as MagicBricksProperty
+        const postedDate = mbProperty.posted_date || ''
+        const dateStr = postedDate.toLowerCase()
+
+        // Check if posted today (contains "hour" or "hours" or "today")
+        if (dateStr.includes('hour') || dateStr.includes('today')) {
+            return 'today'
+        }
+
+        // Check if posted this week (yesterday or within last 7 days)
+        if (dateStr.includes('yesterday')) {
+            return 'thisWeek'
+        }
+
+        // Check for "X days ago" - if 7 or less, it's this week
+        const daysMatch = dateStr.match(/(\d+)\s+days?\s+ago/)
+        if (daysMatch) {
+            const daysAgo = parseInt(daysMatch[1])
+            if (daysAgo <= 7) {
+                return 'thisWeek'
+            }
+        }
+
+        // Check if posted this month (contains current month name)
+        const currentMonth = new Date().toLocaleString('en-US', { month: 'long' }).toLowerCase()
+        if (dateStr.includes(currentMonth)) {
+            return 'thisMonth'
+        }
+
+        // Check for weeks - if less than 4 weeks and in current month, it's this month
+        const weeksMatch = dateStr.match(/(\d+)\s+weeks?\s+ago/)
+        if (weeksMatch) {
+            const weeksAgo = parseInt(weeksMatch[1])
+            const now = new Date()
+            const estimatedDate = new Date(now)
+            estimatedDate.setDate(estimatedDate.getDate() - (weeksAgo * 7))
+
+            // If still in current month
+            if (estimatedDate.getMonth() === now.getMonth() &&
+                estimatedDate.getFullYear() === now.getFullYear()) {
+                return 'thisMonth'
+            }
+        }
+
+        // Everything else is previous months
+        return 'previousMonths'
+    }
+
+    /**
+     * Filter properties and group by relevance, then by date
      * 
      * This is the "business logic" - separated from UI rendering
      */
@@ -241,16 +294,42 @@ export function usePropertyFilters(properties: PropertyType[]): UsePropertyFilte
             p => (p.relevance_score ?? 0) < filters.relevanceThreshold
         )
 
-        // STEP 5: Sort both groups by relevance score (descending)
+        // STEP 5: Sort by relevance score (descending)
         const sortByRelevance = (a: PropertyType, b: PropertyType) => {
             const scoreA = a.relevance_score ?? -1
             const scoreB = b.relevance_score ?? -1
             return scoreB - scoreA
         }
 
+        const sortedMostRelevant = [...mostRelevant].sort(sortByRelevance)
+        const sortedOthers = [...others].sort(sortByRelevance)
+
+        // STEP 6: Sub-group each relevance group by date category
+        const groupByDate = (properties: PropertyType[]) => {
+            const today: PropertyType[] = []
+            const thisWeek: PropertyType[] = []
+            const thisMonth: PropertyType[] = []
+            const previousMonths: PropertyType[] = []
+
+            properties.forEach(p => {
+                const category = getDateCategory(p)
+                if (category === 'today') {
+                    today.push(p)
+                } else if (category === 'thisWeek') {
+                    thisWeek.push(p)
+                } else if (category === 'thisMonth') {
+                    thisMonth.push(p)
+                } else {
+                    previousMonths.push(p)
+                }
+            })
+
+            return { today, thisWeek, thisMonth, previousMonths }
+        }
+
         return {
-            mostRelevant: [...mostRelevant].sort(sortByRelevance),
-            others: [...others].sort(sortByRelevance),
+            mostRelevant: groupByDate(sortedMostRelevant),
+            others: groupByDate(sortedOthers),
         }
     }, [properties, filters])  // Recalculate when properties OR filters change
 

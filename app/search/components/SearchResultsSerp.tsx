@@ -153,7 +153,7 @@ export default async function SearchResultsSerp({ query, sources, provider }: Se
   return (
     <div className="space-y-6">
       {/* Results header in card */}
-      <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
+      {/* <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
@@ -173,7 +173,7 @@ export default async function SearchResultsSerp({ query, sources, provider }: Se
             </div>
           </div>
         </div>
-      </Card>
+      </Card> */}
 
       {/* Property cards */}
       <div className="grid grid-cols-1 gap-6">

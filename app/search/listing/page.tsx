@@ -20,6 +20,7 @@
 
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
@@ -41,15 +42,10 @@ import { NoUrlState, LoadingState, ErrorState } from './components/EmptyStates'
 import { PROPERTY_SOURCES } from './constants/listing.constants'
 
 /**
- * Main Listing Page Component
- * 
- * LEARNING: Composition-Based Architecture
- * - Main component focuses on layout and composition
- * - All logic is delegated to custom hooks
- * - All UI rendering is delegated to components
- * - Main file is easy to understand at a glance
+ * Main Listing Content Component
+ * Wrapped in Suspense boundary to handle useSearchParams
  */
-export default function ListingPage() {
+function ListingContent() {
     // ========================================================================
     // SETUP
     // ========================================================================
@@ -210,5 +206,19 @@ export default function ListingPage() {
                 )}
             </div>
         </div>
+    )
+}
+
+/**
+ * Main Listing Page Component
+ * 
+ * Wraps ListingContent in Suspense to satisfy Next.js requirements
+ * for useSearchParams() in production builds
+ */
+export default function ListingPage() {
+    return (
+        <Suspense fallback={<LoadingState message="Loading property listings..." />}>
+            <ListingContent />
+        </Suspense>
     )
 }

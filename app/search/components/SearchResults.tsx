@@ -14,7 +14,7 @@
 
 import { Card } from '@/components/ui/card'
 import ResultCard from './ResultCard'
-import JsonResultCard from './JsonResultCard'
+import SearchResultsTabs from './SearchResultsTabs'
 import { QueryOptimizerService } from '@/lib/services'
 import { fetchProperties } from '@/lib/api/property-search'
 
@@ -93,21 +93,6 @@ export default async function SearchResults({ query, sources, provider }: Search
   // Determine if we're showing raw JSON or parsed properties
   const isTavilyRaw = provider === 'tavily'
 
-  // Client-side filtering by sources (backend doesn't filter)
-  // Parse sources string into array and filter results
-  if (sources && sources.trim().length > 0) {
-    const sourcesArray = sources.split(',').map(s => s.trim().toLowerCase())
-    const filteredResults = results.filter((result: any) => {
-      // Check if result has a source property and it matches selected sources
-      return result.source && sourcesArray.includes(result.source.toLowerCase())
-    })
-
-    // Only use filtered results if we actually found matches
-    if (filteredResults.length > 0) {
-      results = filteredResults
-    }
-  }
-
 
   // For Tavily, optimize the query to show optimized version instead of original
   let displayQuery = query
@@ -141,17 +126,20 @@ export default async function SearchResults({ query, sources, provider }: Search
     )
   }
 
+  // For Tavily results, use tabs to organize by source
+  if (isTavilyRaw) {
+    return <SearchResultsTabs query={displayQuery} provider={provider} results={results} />
+  }
+
+  // For other providers, show traditional cards
   return (
     <div className="space-y-6">
       {/* Results header in card */}
       <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
         <div className="flex items-center justify-between">
           <div>
-            {/* <h2 className="text-xl font-bold text-gray-900">
-              {isTavilyRaw ? 'Raw JSON Results (Tavily)' : 'Search Results'}
-            </h2> */}
-            <p className=" text-xl font-bold text-gray-600 mt-1">
-              {results.length} {isTavilyRaw ? 'results' : 'properties'}
+            <p className="text-xl font-bold text-gray-600 mt-1">
+              {results.length} properties
               {query && ` matching "${displayQuery}"`}
             </p>
           </div>
@@ -161,19 +149,11 @@ export default async function SearchResults({ query, sources, provider }: Search
         </div>
       </Card>
 
-      {/* Property cards or JSON results */}
+      {/* Property cards */}
       <div className="grid grid-cols-1 gap-6">
-        {isTavilyRaw ? (
-          // Show raw JSON for Tavily results
-          results.map((result: any, index: number) => (
-            <JsonResultCard key={result.url || index} result={result} index={index} origQuery={displayQuery} />
-          ))
-        ) : (
-          // Show parsed property cards for other providers
-          results.map((property: any) => (
-            <ResultCard key={property.id} property={property} />
-          ))
-        )}
+        {results.map((property: any) => (
+          <ResultCard key={property.id} property={property} />
+        ))}
       </div>
     </div>
   )

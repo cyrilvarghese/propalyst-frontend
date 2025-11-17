@@ -127,8 +127,15 @@ export function PropertyFilters({
                             Relevance ≥ {filters.relevanceThreshold}
                         </label>
                         <Badge variant="outline" className="text-xs h-5">
-                            {groupedProperties.mostRelevant.length}/
-                            {groupedProperties.others.length}
+                            {groupedProperties.mostRelevant.today.length +
+                                groupedProperties.mostRelevant.thisWeek.length +
+                                groupedProperties.mostRelevant.thisMonth.length +
+                                groupedProperties.mostRelevant.previousMonths.length}
+                            /
+                            {groupedProperties.others.today.length +
+                                groupedProperties.others.thisWeek.length +
+                                groupedProperties.others.thisMonth.length +
+                                groupedProperties.others.previousMonths.length}
                         </Badge>
                     </div>
                     <div className="flex items-center">
