@@ -22,12 +22,12 @@ export default function SearchResultsTabs({ query, provider, results }: SearchRe
 
     // Define available sources
     const sources = [
-        { value: 'magicbricks', label: 'MagicBricks' },
-        { value: 'housing', label: 'Housing' },
-        { value: '99acres', label: '99acres' },
-        { value: 'nobroker', label: 'NoBroker' },
-        { value: 'commonfloor', label: 'CommonFloor' },
-        { value: 'squareyards', label: 'SquareYards' },
+        { value: 'magicbricks', label: 'MagicBricks', status: true },
+        { value: 'housing', label: 'Housing', status: false },
+        { value: '99acres', label: '99acres', status: false },
+        { value: 'nobroker', label: 'NoBroker', status: false },
+        { value: 'commonfloor', label: 'CommonFloor', status: false },
+        { value: 'squareyards', label: 'SquareYards', status: true },
     ]
 
     // Handle card click - navigate to listing page
@@ -83,66 +83,70 @@ export default function SearchResultsTabs({ query, provider, results }: SearchRe
             <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
                 <Tabs defaultValue="magicbricks" className="w-full">
                     <TabsList>
-                        {sourceCounts.map(source => (
-                            <TabsTrigger key={source.value} value={source.value}>
-                                {source.label} ({source.count})
-                            </TabsTrigger>
-                        ))}
+                        {sourceCounts
+                            .filter(source => source.status === true)
+                            .map(source => (
+                                <TabsTrigger key={source.value} value={source.value}>
+                                    {source.label} ({source.count})
+                                </TabsTrigger>
+                            ))}
                     </TabsList>
 
-                    {sources.map(source => {
-                        const filteredResults = filterBySource(source.value)
+                    {sources
+                        .filter(source => source.status === true)
+                        .map(source => {
+                            const filteredResults = filterBySource(source.value)
 
-                        return (
-                            <TabsContent key={source.value} value={source.value} className="mt-6">
-                                {filteredResults.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {filteredResults.map((result: any, index: number) => (
-                                            <Card
-                                                key={result.url || index}
-                                                className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-                                                onClick={() => handleCardClick(result.url)}
-                                            >
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <h3 className="text-lg font-semibold text-gray-900 flex-1">
-                                                        {result.title || `Result #${index + 1}`}
-                                                    </h3>
-                                                    {result.score && (
-                                                        <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
-                                                            Score: {result.score.toFixed(2)}
-                                                        </span>
+                            return (
+                                <TabsContent key={source.value} value={source.value} className="mt-6">
+                                    {filteredResults.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {filteredResults.map((result: any, index: number) => (
+                                                <Card
+                                                    key={result.url || index}
+                                                    className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                                                    onClick={() => handleCardClick(result.url)}
+                                                >
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <h3 className="text-lg font-semibold text-gray-900 flex-1">
+                                                            {result.title || `Result #${index + 1}`}
+                                                        </h3>
+                                                        {result.score && (
+                                                            <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                                Score: {result.score.toFixed(2)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {result.url && (
+                                                        <p className="text-indigo-600 text-sm mb-3 truncate">
+                                                            {result.url}
+                                                        </p>
                                                     )}
-                                                </div>
 
-                                                {result.url && (
-                                                    <p className="text-indigo-600 text-sm mb-3 truncate">
-                                                        {result.url}
-                                                    </p>
-                                                )}
-
-                                                {/* {result.content && (
+                                                    {/* {result.content && (
                                                     <div className="mb-3">
                                                         <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">CONTENT</p>
                                                         <p className="text-gray-700 text-sm">{result.content}</p>
                                                     </div>
                                                 )} */}
-                                            </Card>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-12">
-                                        <div className="text-gray-400 text-5xl mb-4">🏠</div>
-                                        <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                            No {source.label} properties found
-                                        </h3>
-                                        <p className="text-gray-500">
-                                            Try adjusting your search query or check another source
-                                        </p>
-                                    </div>
-                                )}
-                            </TabsContent>
-                        )
-                    })}
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <div className="text-gray-400 text-5xl mb-4">🏠</div>
+                                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                                                No {source.label} properties found
+                                            </h3>
+                                            <p className="text-gray-500">
+                                                Try adjusting your search query or check another source
+                                            </p>
+                                        </div>
+                                    )}
+                                </TabsContent>
+                            )
+                        })}
                 </Tabs>
             </Card>
         </div>
