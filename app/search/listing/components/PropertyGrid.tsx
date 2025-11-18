@@ -13,7 +13,8 @@
 import { Fragment } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Card } from '@/components/ui/card'
 import CompactPropertyCard from './CompactPropertyCard'
 import CompactMagicBricksCard from './CompactMagicBricksCard'
 import { PropertyGridProps } from '../types/listing.types'
@@ -84,14 +85,8 @@ export function PropertyGrid({
                         {/* Main Section Header */}
                         <div className="flex items-center gap-2 mb-4">
                             <h3 className="text-lg font-semibold text-gray-900">
-                                Matching Properties (Score ≥ {relevanceThreshold})
+                                {isLoading ? 'Loading Matching properties' : `Matching Properties (Score ≥ ${relevanceThreshold})`}
                             </h3>
-                            {isLoading && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-600 font-medium">Loading matching...</span>
-                                    <Progress value={undefined} className="w-20 h-1.5" />
-                                </div>
-                            )}
                             <Badge className="bg-green-500 text-white text-xs">
                                 {totalMostRelevant}
                             </Badge>
@@ -133,6 +128,18 @@ export function PropertyGrid({
                                             )
                                         })}
                                     </div>
+                                ) : isLoading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {[...Array(3)].map((_, i) => (
+                                            <Card key={i} className="p-4 space-y-3">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-6 w-1/2" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-2/3" />
+                                                <Skeleton className="h-8 w-24" />
+                                            </Card>
+                                        ))}
+                                    </div>
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
                                         No properties posted today
@@ -158,6 +165,18 @@ export function PropertyGrid({
                                                 </Fragment>
                                             )
                                         })}
+                                    </div>
+                                ) : isLoading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {[...Array(3)].map((_, i) => (
+                                            <Card key={i} className="p-4 space-y-3">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-6 w-1/2" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-2/3" />
+                                                <Skeleton className="h-8 w-24" />
+                                            </Card>
+                                        ))}
                                     </div>
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
@@ -185,6 +204,18 @@ export function PropertyGrid({
                                             )
                                         })}
                                     </div>
+                                ) : isLoading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {[...Array(3)].map((_, i) => (
+                                            <Card key={i} className="p-4 space-y-3">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-6 w-1/2" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-2/3" />
+                                                <Skeleton className="h-8 w-24" />
+                                            </Card>
+                                        ))}
+                                    </div>
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
                                         No properties posted this month
@@ -211,6 +242,18 @@ export function PropertyGrid({
                                             )
                                         })}
                                     </div>
+                                ) : isLoading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {[...Array(3)].map((_, i) => (
+                                            <Card key={i} className="p-4 space-y-3">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-6 w-1/2" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-2/3" />
+                                                <Skeleton className="h-8 w-24" />
+                                            </Card>
+                                        ))}
+                                    </div>
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
                                         No properties from previous months
@@ -229,14 +272,8 @@ export function PropertyGrid({
                         {/* Main Section Header */}
                         <div className="flex items-center gap-2 mb-4">
                             <h3 className="text-lg font-semibold text-gray-700">
-                                Others (Score &lt; {relevanceThreshold})
+                                {isLoading ? 'Loading Matching properties' : `Others (Score < ${relevanceThreshold})`}
                             </h3>
-                            {isLoading && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-600 font-medium">Loading matching...</span>
-                                    <Progress value={undefined} className="w-20 h-1.5" />
-                                </div>
-                            )}
                             <Badge variant="secondary" className="text-xs">
                                 {totalOthers}
                             </Badge>
@@ -278,6 +315,18 @@ export function PropertyGrid({
                                             )
                                         })}
                                     </div>
+                                ) : isLoading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {[...Array(3)].map((_, i) => (
+                                            <Card key={i} className="p-4 space-y-3">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-6 w-1/2" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-2/3" />
+                                                <Skeleton className="h-8 w-24" />
+                                            </Card>
+                                        ))}
+                                    </div>
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
                                         No properties posted today
@@ -303,6 +352,18 @@ export function PropertyGrid({
                                                 </Fragment>
                                             )
                                         })}
+                                    </div>
+                                ) : isLoading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {[...Array(3)].map((_, i) => (
+                                            <Card key={i} className="p-4 space-y-3">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-6 w-1/2" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-2/3" />
+                                                <Skeleton className="h-8 w-24" />
+                                            </Card>
+                                        ))}
                                     </div>
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
@@ -330,6 +391,18 @@ export function PropertyGrid({
                                             )
                                         })}
                                     </div>
+                                ) : isLoading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {[...Array(3)].map((_, i) => (
+                                            <Card key={i} className="p-4 space-y-3">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-6 w-1/2" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-2/3" />
+                                                <Skeleton className="h-8 w-24" />
+                                            </Card>
+                                        ))}
+                                    </div>
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
                                         No properties posted this month
@@ -355,6 +428,18 @@ export function PropertyGrid({
                                                 </Fragment>
                                             )
                                         })}
+                                    </div>
+                                ) : isLoading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {[...Array(3)].map((_, i) => (
+                                            <Card key={i} className="p-4 space-y-3">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-6 w-1/2" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-2/3" />
+                                                <Skeleton className="h-8 w-24" />
+                                            </Card>
+                                        ))}
                                     </div>
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">

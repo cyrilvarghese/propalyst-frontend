@@ -155,7 +155,7 @@ function ListingContent() {
                 {/* STATE: Loading */}
                 {/* ============================================================ */}
                 {url && isLoading && properties.length === 0 && (
-                    <LoadingState message="Scraping property listings..." />
+                    <LoadingState message="Getting property listings..." />
                 )}
 
                 {/* ============================================================ */}
