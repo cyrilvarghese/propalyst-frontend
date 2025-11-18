@@ -14,10 +14,10 @@ import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import Image from 'next/image'
 import { Info, ExternalLink, ChevronDown, ChevronUp, User, Star } from 'lucide-react'
-import { ScrapedProperty } from '@/lib/services/property-scrape.service'
+import { SquareYardsProperty } from '@/lib/services/property-scrape.service'
 
 interface CompactPropertyCardProps {
-    property: ScrapedProperty
+    property: SquareYardsProperty
 }
 
 /**
@@ -53,7 +53,7 @@ function parseRelevanceReason(reason: string): { matches: string; mismatches: st
 /**
  * Get matches and mismatches from property (uses arrays if available, fallback to parsing)
  */
-function getMatchesAndMismatches(property: ScrapedProperty): { matches: string[]; mismatches: string[] } {
+function getMatchesAndMismatches(property: SquareYardsProperty): { matches: string[]; mismatches: string[] } {
     // If new format with arrays, use them directly
     if (property.matches || property.mismatches) {
         return {

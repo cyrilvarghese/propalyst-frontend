@@ -6,7 +6,7 @@
  * This improves type safety and makes the code self-documenting.
  */
 
-import { ScrapedProperty, MagicBricksProperty } from '@/lib/services/property-scrape.service'
+import { SquareYardsProperty, MagicBricksProperty } from '@/lib/services/property-scrape.service'
 
 // ============================================================================
 // PROPERTY TYPES
@@ -20,7 +20,7 @@ import { ScrapedProperty, MagicBricksProperty } from '@/lib/services/property-sc
  * - TypeScript will ensure you handle both cases
  * - Use when data can be one of multiple shapes
  */
-export type PropertyType = ScrapedProperty | MagicBricksProperty
+export type PropertyType = SquareYardsProperty | MagicBricksProperty
 
 /**
  * Helper to check if a property is MagicBricks type

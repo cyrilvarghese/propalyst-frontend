@@ -37,7 +37,7 @@ export function detectSourceFromUrl(url: string): PropertySource {
 /**
  * Scraped Property (SquareYards format - matching backend response structure)
  */
-export interface ScrapedProperty {
+export interface SquareYardsProperty {
     title: string
     location: string
     price: string // e.g., "₹ 4.2 Cr"
@@ -106,7 +106,7 @@ export interface PropertyScrapeResponse {
     count: number
     source: string
     scraped_at: string
-    properties: ScrapedProperty[]
+    properties: SquareYardsProperty[]
     api_calls_made?: number
     error?: string
 }
@@ -136,27 +136,27 @@ export class PropertyScrapeService {
      * @param url - The property listing URL to scrape
      * @returns Structured property data from the scraped URL
      */
-    static async scrapeProperty(url: string): Promise<PropertyScrapeResponse> {
-        console.log('🔍 PropertyScrapeService.scrapeProperty called with URL:', url)
+    // static async scrapeProperty(url: string): Promise<PropertyScrapeResponse> {
+    //     console.log('🔍 PropertyScrapeService.scrapeProperty called with URL:', url)
 
-        // Call FastAPI backend directly (same pattern as PropertySearchService)
-        const encodedUrl = encodeURIComponent(url)
-        const response = await fetch(`${API_BASE_URL}/api/get_listing_details_batch?url=${encodedUrl}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
+    //     // Call FastAPI backend directly (same pattern as PropertySearchService)
+    //     const encodedUrl = encodeURIComponent(url)
+    //     const response = await fetch(`${API_BASE_URL}/api/get_listing_details_batch?url=${encodedUrl}`, {
+    //         method: 'GET',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //     })
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
-            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
-        }
+    //     if (!response.ok) {
+    //         const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+    //         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
+    //     }
 
-        const result = await response.json()
-        console.log('✅ PropertyScrapeService.scrapeProperty completed, found', result.count, 'properties')
-        return result
-    }
+    //     const result = await response.json()
+    //     console.log('✅ PropertyScrapeService.scrapeProperty completed, found', result.count, 'properties')
+    //     return result
+    // }
 
     /**
      * Fetch properties in batch (non-streaming)
@@ -168,12 +168,78 @@ export class PropertyScrapeService {
      * @param batchSize - Optional batch size (defaults to 10)
      * @returns Promise with all properties (SquareYards or MagicBricks format)
      */
-    static async fetchPropertiesBatch(
-        url: string,
-        origQuery?: string,
-        batchSize: number = 10
-    ): Promise<PropertyScrapeResponse | MagicBricksScrapeResponse> {
-        console.log('🔍 PropertyScrapeService.fetchPropertiesBatch called with URL:', url, 'origQuery:', origQuery)
+    // static async fetchPropertiesBatch(
+    //     url: string,
+    //     origQuery?: string,
+    //     batchSize: number = 10
+    // ): Promise<PropertyScrapeResponse | MagicBricksScrapeResponse> {
+    //     console.log('🔍 PropertyScrapeService.fetchPropertiesBatch called with URL:', url, 'origQuery:', origQuery)
+
+    //     // Detect source from URL
+    //     const source = detectSourceFromUrl(url)
+    //     console.log('📍 Detected source:', source)
+
+    //     // Build URL with query parameters
+    //     const params = new URLSearchParams({
+    //         url: url,
+    //         batch_size: batchSize.toString()
+    //     })
+
+    //     if (origQuery) {
+    //         params.set('orig_query', origQuery)
+    //     } else {
+    //         params.set('orig_query', '')
+    //     }
+
+    //     // Select API endpoint based on source
+    //     let endpoint: string
+    //     if (source === 'magicbricks') {
+    //         endpoint = '/api/get_listing_details_batch_magicbricks'
+    //     } else if (source === 'squareyards') {
+    //         endpoint = '/api/get_listing_details_batch'
+    //     } else {
+    //         // Default to SquareYards endpoint for unknown sources
+    //         endpoint = '/api/get_listing_details_batch'
+    //     }
+
+    //     const apiUrl = `${API_BASE_URL}${endpoint}?${params.toString()}`
+    //     console.log('🌐 Fetching from:', apiUrl)
+
+    //     const response = await fetch(apiUrl, {
+    //         method: 'GET',
+    //         headers: {
+    //             'Accept': 'application/json',
+    //         },
+    //     })
+
+    //     if (!response.ok) {
+    //         const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+    //         throw new Error(errorData.detail || errorData.error || `HTTP error! status: ${response.status}`)
+    //     }
+
+    //     const result = await response.json()
+
+    //     if (!result.success) {
+    //         throw new Error(result.error || 'Failed to fetch properties')
+    //     }
+
+    //     console.log('✅ PropertyScrapeService.fetchPropertiesBatch completed')
+    //     console.log(`📊 Found ${result.count} properties with ${result.api_calls_made} API calls`)
+    //     console.log(`🏢 Source: ${result.source || source}`)
+
+    //     return result
+    // }
+
+    /**
+     * Create EventSource for streaming properties via Server-Sent Events (SSE)
+     * Properties stream in one at a time as backend processes batches of 5
+     * 
+     * @param url - The property listing URL to scrape
+     * @param origQuery - Optional original search query for relevance scoring
+     * @returns EventSource instance for streaming properties
+     */
+    static createPropertyStream(url: string, origQuery?: string): EventSource {
+        console.log('🔍 PropertyScrapeService.createPropertyStream called with URL:', url, 'origQuery:', origQuery)
 
         // Detect source from URL
         const source = detectSourceFromUrl(url)
@@ -182,7 +248,6 @@ export class PropertyScrapeService {
         // Build URL with query parameters
         const params = new URLSearchParams({
             url: url,
-            batch_size: batchSize.toString()
         })
 
         if (origQuery) {
@@ -191,43 +256,24 @@ export class PropertyScrapeService {
             params.set('orig_query', '')
         }
 
-        // Select API endpoint based on source
+        // Select API endpoint based on source (streaming endpoints without _batch)
         let endpoint: string
         if (source === 'magicbricks') {
-            endpoint = '/api/get_listing_details_batch_magicbricks'
+            endpoint = '/api/get_listing_details_magicbricks'
         } else if (source === 'squareyards') {
-            endpoint = '/api/get_listing_details_batch'
+            endpoint = '/api/get_listing_details'
         } else {
             // Default to SquareYards endpoint for unknown sources
-            endpoint = '/api/get_listing_details_batch'
+            endpoint = '/api/get_listing_details'
         }
 
-        const apiUrl = `${API_BASE_URL}${endpoint}?${params.toString()}`
-        console.log('🌐 Fetching from:', apiUrl)
+        const streamUrl = `${API_BASE_URL}${endpoint}?${params.toString()}`
+        console.log('🌐 Streaming from:', streamUrl)
 
-        const response = await fetch(apiUrl, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
-        })
+        // Create EventSource for SSE streaming
+        const eventSource = new EventSource(streamUrl)
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
-            throw new Error(errorData.detail || errorData.error || `HTTP error! status: ${response.status}`)
-        }
-
-        const result = await response.json()
-
-        if (!result.success) {
-            throw new Error(result.error || 'Failed to fetch properties')
-        }
-
-        console.log('✅ PropertyScrapeService.fetchPropertiesBatch completed')
-        console.log(`📊 Found ${result.count} properties with ${result.api_calls_made} API calls`)
-        console.log(`🏢 Source: ${result.source || source}`)
-
-        return result
+        return eventSource
     }
 }
 

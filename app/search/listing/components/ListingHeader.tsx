@@ -40,37 +40,36 @@ export function ListingHeader({
                 <div className="flex-1">
                     <div className="flex items-center justify-between gap-4">
                         {/* Title Section */}
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-xl font-bold text-gray-900">
                                 Property Listings
                             </h2>
 
-                            {/* Result Count */}
+                            {/* Result Count and Query - Line 1 (max 2 lines) */}
                             {propertyCount > 0 && origQuery ? (
-                                <p className="text-xl text-gray-500 mt-1">
+                                <p className="text-sm text-gray-500 mt-1 break-words line-clamp-2">
                                     Found {propertyCount}{' '}
-                                    {propertyCount === 1 ? 'property' : 'properties'} matching "{
-                                        displayQuery
-                                    }"
+                                    {propertyCount === 1 ? 'property' : 'properties'} matching "{displayQuery}"
                                 </p>
                             ) : (
-                                <p className="text-sm text-gray-600 mt-1">
+                                <p className="text-sm text-gray-600 mt-1 break-words line-clamp-2">
                                     No properties found for the query "{displayQuery}"
                                 </p>
                             )}
 
-                            {/* URL Display */}
-                            <p className="text-xs text-gray-500 mt-1">
-                                <a
-                                    href={displayUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-indigo-600 hover:text-indigo-700 hover:underline break-all cursor-pointer"
-                                >
-                                    {displayUrl}
-                                </a>{' '}
-                                URL
-                            </p>
+                            {/* URL Display - Line 2 (single line) */}
+                            {displayUrl && (
+                                <p className="text-xs text-gray-500 mt-1 break-all line-clamp-1">
+                                    <a
+                                        href={displayUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-indigo-600 hover:text-indigo-700 hover:underline cursor-pointer"
+                                    >
+                                        {displayUrl}
+                                    </a>
+                                </p>
+                            )}
 
                             {/* Loading Badge */}
                             {isLoading && (

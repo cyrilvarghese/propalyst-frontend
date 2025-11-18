@@ -1,5 +1,5 @@
 /**
- * ScrapedPropertyCard - Client Component
+ * SquareYardsPropertyCard - Client Component
  * =======================================
  *
  * Displays a single scraped property with all its details.
@@ -13,11 +13,11 @@ import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import Image from 'next/image'
 import { Info } from 'lucide-react'
-import { ScrapedProperty } from '@/lib/services/property-scrape.service'
+import { SquareYardsProperty } from '@/lib/services/property-scrape.service'
 import AgentCard from './AgentCard'
 
-interface ScrapedPropertyCardProps {
-    property: ScrapedProperty
+interface SquareYardsPropertyCardProps {
+    property: SquareYardsProperty
 }
 
 /**
@@ -103,7 +103,7 @@ function parseRelevanceReason(reason: string): { matches: string; mismatches: st
     }
 }
 
-export default function ScrapedPropertyCard({ property }: ScrapedPropertyCardProps) {
+export default function SquareYardsPropertyCard({ property }: SquareYardsPropertyCardProps) {
     const relevanceBgColor = getRelevanceColor(property.relevance_score)
 
     return (

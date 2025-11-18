@@ -7,10 +7,10 @@
  */
 
 import { useState, useEffect } from 'react'
-import { PropertyScrapeService, ScrapedProperty, MagicBricksProperty } from '@/lib/services/property-scrape.service'
+import { PropertyScrapeService, SquareYardsProperty, MagicBricksProperty } from '@/lib/services/property-scrape.service'
 
 interface UsePropertyBatchReturn {
-  properties: ScrapedProperty[] | MagicBricksProperty[]
+  properties: SquareYardsProperty[] | MagicBricksProperty[]
   isLoading: boolean
   error: Error | null
   isComplete: boolean
@@ -28,7 +28,7 @@ interface UsePropertyBatchReturn {
  * @returns Object with properties array, loading state, error, and completion status
  */
 export function usePropertyBatch(url: string, origQuery?: string): UsePropertyBatchReturn {
-  const [properties, setProperties] = useState<ScrapedProperty[] | MagicBricksProperty[]>([])
+  const [properties, setProperties] = useState<SquareYardsProperty[] | MagicBricksProperty[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [isComplete, setIsComplete] = useState(false)
@@ -61,13 +61,13 @@ export function usePropertyBatch(url: string, origQuery?: string): UsePropertyBa
         setProperties(result.properties)
         setApiCallsMade(result.api_calls_made || null)
         setSource(result.source || 'unknown')
-        
+
         // Check if this is a MagicBricks response with top-level relevance
         if ('relevance_score' in result && result.relevance_score !== undefined) {
           setRelevanceScore(result.relevance_score)
           setRelevanceReason(result.relevance_reason)
         }
-        
+
         setIsComplete(true)
       } catch (err) {
         console.error('❌ Fetch error:', err)

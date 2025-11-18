@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 // Hooks
-import { usePropertyBatch } from './hooks/usePropertyBatch'
+import { usePropertyStream } from './hooks/usePropertyStream'
 import { usePropertyFilters } from './hooks/usePropertyFilters'
 import { useCacheReset } from './hooks/useCacheReset'
 
@@ -63,17 +63,17 @@ function ListingContent() {
     // ========================================================================
 
     /**
-     * usePropertyBatch: Fetches properties from backend
+     * usePropertyStream: Streams properties from backend via SSE
      * 
      * Returns:
-     * - properties: Array of fetched properties
-     * - isLoading: Is fetch in progress?
-     * - error: Error if fetch failed
-     * - isComplete: Has fetch completed?
+     * - properties: Array of properties (accumulates as they stream in)
+     * - isLoading: Is stream in progress?
+     * - error: Error if stream failed
+     * - isComplete: Has stream completed?
      * - source: 'magicbricks' or 'squareyards'
      * - (other metadata fields)
      */
-    const { properties, isLoading, error, isComplete, source } = usePropertyBatch(
+    const { properties, isLoading, error, isComplete, source } = usePropertyStream(
         decodedUrl,
         origQuery
     )
