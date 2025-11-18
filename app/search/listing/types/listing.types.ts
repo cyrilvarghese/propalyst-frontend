@@ -257,6 +257,9 @@ export interface PropertyGridProps {
 
     /** Is loading complete with no results? */
     isComplete: boolean
+
+    /** Is currently loading/streaming properties? */
+    isLoading?: boolean
 }
 
 // ============================================================================

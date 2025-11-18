@@ -201,6 +201,7 @@ function ListingContent() {
                             isMagicBricks={isMagicBricks}
                             relevanceThreshold={filters.relevanceThreshold}
                             isComplete={isComplete}
+                            isLoading={isLoading}
                         />
                     </div>
                 )}

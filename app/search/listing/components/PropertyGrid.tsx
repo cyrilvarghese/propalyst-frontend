@@ -13,6 +13,7 @@
 import { Fragment } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Progress } from '@/components/ui/progress'
 import CompactPropertyCard from './CompactPropertyCard'
 import CompactMagicBricksCard from './CompactMagicBricksCard'
 import { PropertyGridProps } from '../types/listing.types'
@@ -34,6 +35,7 @@ export function PropertyGrid({
     isMagicBricks,
     relevanceThreshold,
     isComplete,
+    isLoading = false,
 }: PropertyGridProps) {
     const hasMostRelevant =
         groupedProperties.mostRelevant.today.length > 0 ||
@@ -84,6 +86,12 @@ export function PropertyGrid({
                             <h3 className="text-lg font-semibold text-gray-900">
                                 Matching Properties (Score ≥ {relevanceThreshold})
                             </h3>
+                            {isLoading && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-600 font-medium">Loading matching...</span>
+                                    <Progress value={undefined} className="w-20 h-1.5" />
+                                </div>
+                            )}
                             <Badge className="bg-green-500 text-white text-xs">
                                 {totalMostRelevant}
                             </Badge>
@@ -223,6 +231,12 @@ export function PropertyGrid({
                             <h3 className="text-lg font-semibold text-gray-700">
                                 Others (Score &lt; {relevanceThreshold})
                             </h3>
+                            {isLoading && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-600 font-medium">Loading matching...</span>
+                                    <Progress value={undefined} className="w-20 h-1.5" />
+                                </div>
+                            )}
                             <Badge variant="secondary" className="text-xs">
                                 {totalOthers}
                             </Badge>
