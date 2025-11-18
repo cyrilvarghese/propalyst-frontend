@@ -14,6 +14,7 @@
 import { Button } from '@/components/ui/button'
 import { Trash2 } from 'lucide-react'
 import { ListingHeaderProps } from '../types/listing.types'
+import { safeDecodeURIComponent } from '../utils/property-utils'
 
 /**
  * ListingHeader Component
@@ -28,9 +29,9 @@ export function ListingHeader({
     cacheState,
     onResetCache,
 }: ListingHeaderProps) {
-    // Decode URL for display
-    const displayUrl = url ? decodeURIComponent(url) : ''
-    const displayQuery = origQuery ? decodeURIComponent(origQuery) : ''
+    // Decode URL and query for display
+    const displayUrl = url ? safeDecodeURIComponent(url) : ''
+    const displayQuery = origQuery ? safeDecodeURIComponent(origQuery) : ''
 
     return (
         <div className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6 mb-4 rounded-lg">

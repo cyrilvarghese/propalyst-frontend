@@ -45,4 +45,51 @@ export function extractDate(dateStr: string): number {
     return isNaN(date.getTime()) ? 0 : date.getTime()
 }
 
+/**
+ * Safely decode URI components with error handling
+ * Handles malformed URIs (e.g., incomplete percent encodings at the end)
+ * 
+ * @param encoded - The encoded URI string to decode
+ * @returns The decoded string, or original string if decoding fails
+ * 
+ * Example:
+ * - "Ready%20house" -> "Ready house"
+ * - "Ready%20house%2C%" -> "Ready house," (handles trailing incomplete %)
+ */
+export function safeDecodeURIComponent(encoded: string): string {
+    if (!encoded) return ''
+    
+    try {
+        // First, try direct decoding
+        return decodeURIComponent(encoded)
+    } catch (e) {
+        // If decoding fails, try to fix common issues:
+        // 1. Remove trailing incomplete percent encodings (e.g., "%" at the end)
+        // 2. Replace incomplete percent sequences with the literal character
+        
+        let fixed = encoded
+        
+        // Remove trailing incomplete percent encodings
+        fixed = fixed.replace(/%$/, '') // Remove trailing %
+        fixed = fixed.replace(/%[0-9A-Fa-f]$/i, '') // Remove trailing %X (single hex digit)
+        
+        try {
+            return decodeURIComponent(fixed)
+        } catch (e2) {
+            // If still failing, replace remaining incomplete % sequences
+            fixed = fixed.replace(/%[^0-9A-Fa-f]|%$/gi, (match) => {
+                // Replace incomplete % sequences with the character after %
+                return match.length > 1 ? match.substring(1) : ''
+            })
+            
+            try {
+                return decodeURIComponent(fixed)
+            } catch (e3) {
+                // Last resort: return original string
+                return encoded
+            }
+        }
+    }
+}
+
 

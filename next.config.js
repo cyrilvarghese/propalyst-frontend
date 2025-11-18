@@ -2,6 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  
+  // Base path for production (e.g., '/app' or '/frontend')
+  // Set via NEXT_PUBLIC_BASE_PATH environment variable
+  // Leave empty string for root domain deployment
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  
+  // Asset prefix (optional, usually same as basePath)
+  // Useful for CDN deployment
+  assetPrefix: process.env.NEXT_PUBLIC_ASSET_PREFIX || '',
+  
   images: {
     remotePatterns: [
       {
