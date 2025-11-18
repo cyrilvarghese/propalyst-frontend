@@ -6,6 +6,8 @@
  * Returns all properties at once after scraping completes.
  */
 
+//not used anymore
+
 import { useState, useEffect } from 'react'
 import { PropertyScrapeService, SquareYardsProperty, MagicBricksProperty } from '@/lib/services/property-scrape.service'
 
@@ -55,30 +57,30 @@ export function usePropertyBatch(url: string, origQuery?: string): UsePropertyBa
     }
 
     // Fetch properties in batch
-    const fetchProperties = async () => {
-      try {
-        const result = await PropertyScrapeService.fetchPropertiesBatch(url, origQuery, 10)
-        setProperties(result.properties)
-        setApiCallsMade(result.api_calls_made || null)
-        setSource(result.source || 'unknown')
+    // const fetchProperties = async () => {
+    //   try {
+    //     const result = await PropertyScrapeService.fetchPropertiesBatch(url, origQuery, 10)
+    //     setProperties(result.properties)
+    //     setApiCallsMade(result.api_calls_made || null)
+    //     setSource(result.source || 'unknown')
 
-        // Check if this is a MagicBricks response with top-level relevance
-        if ('relevance_score' in result && result.relevance_score !== undefined) {
-          setRelevanceScore(result.relevance_score)
-          setRelevanceReason(result.relevance_reason)
-        }
+    //     // Check if this is a MagicBricks response with top-level relevance
+    //     if ('relevance_score' in result && result.relevance_score !== undefined) {
+    //       setRelevanceScore(result.relevance_score)
+    //       setRelevanceReason(result.relevance_reason)
+    //     }
 
-        setIsComplete(true)
-      } catch (err) {
-        console.error('❌ Fetch error:', err)
-        setError(err as Error)
-        setIsComplete(true)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+    //     setIsComplete(true)
+    //   } catch (err) {
+    //     console.error('❌ Fetch error:', err)
+    //     setError(err as Error)
+    //     setIsComplete(true)
+    //   } finally {
+    //     setIsLoading(false)
+    //   }
+    // }
 
-    fetchProperties()
+    // fetchProperties()
   }, [url, origQuery])
 
   return {
