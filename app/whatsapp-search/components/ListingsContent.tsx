@@ -153,7 +153,7 @@ export default function ListingsContent() {
                             property_query: exactMatch ? undefined : (propertyFilter.trim() || undefined),
                             property_type: exactMatch ? (propertyFilter.trim() || undefined) : undefined,
                             location: locationFilter.trim() || undefined,
-                            listing_type: transactionTypeFilter.trim() || undefined,
+                            transaction_type: transactionTypeFilter.trim() || undefined,
                             limit: 100,
                             exactMatch: exactMatch
                         })

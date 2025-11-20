@@ -228,7 +228,6 @@ export class CREAListingsService {
         property_type?: string
         location?: string
         configuration?: string
-        listing_type?: string
         transaction_type?: string
         min_price?: number
         max_price?: number
@@ -243,7 +242,6 @@ export class CREAListingsService {
             property_type,
             location,
             configuration,
-            listing_type,
             transaction_type,
             min_price,
             max_price,
@@ -261,9 +259,6 @@ export class CREAListingsService {
         }
         if (configuration && configuration.trim().length > 0) {
             params.set('configuration', configuration.trim())
-        }
-        if (listing_type && listing_type.trim().length > 0) {
-            params.set('listing_type', listing_type.trim())
         }
         if (transaction_type && transaction_type.trim().length > 0) {
             params.set('transaction_type', transaction_type.trim())

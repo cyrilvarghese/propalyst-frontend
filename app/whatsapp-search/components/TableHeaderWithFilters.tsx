@@ -36,8 +36,8 @@ interface TableHeaderWithFiltersProps {
     hasActiveFilters?: boolean
 }
 
-export default function TableHeaderWithFilters({ 
-    onLocationFilter, 
+export default function TableHeaderWithFilters({
+    onLocationFilter,
     locationFilter,
     onAgentFilter,
     agentFilter,
@@ -141,9 +141,10 @@ export default function TableHeaderWithFilters({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All types</SelectItem>
-                                <SelectItem value="Sale">Sale</SelectItem>
-                                <SelectItem value="Rent">Rent</SelectItem>
-                                <SelectItem value="Requirement">Requirement</SelectItem>
+                                <SelectItem value="sale">Buy</SelectItem>
+                                <SelectItem value="sell">Sell</SelectItem>
+                                <SelectItem value="sale">Sale</SelectItem>
+                                <SelectItem value="requirement">Rent</SelectItem>
                             </SelectContent>
                         </Select>
                     )}

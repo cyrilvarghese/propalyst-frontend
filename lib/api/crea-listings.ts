@@ -129,7 +129,6 @@ export async function searchCREAListingsCombined(filters: {
     property_type?: string
     location?: string
     configuration?: string
-    listing_type?: string
     transaction_type?: string
     min_price?: number
     max_price?: number
