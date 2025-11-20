@@ -39,7 +39,7 @@ export class CREAMessageService {
     static async formatMessage(request: CREAMessageRequest): Promise<CREAMessageResponse> {
         console.log('🔍 CREAMessageService.formatMessage called with:', request)
 
-        const response = await fetch(`${API_BASE_URL}/api/crea/format-message`, {
+        const response = await fetch(`${API_BASE_URL}/api/crea/get-whatsapp-message`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

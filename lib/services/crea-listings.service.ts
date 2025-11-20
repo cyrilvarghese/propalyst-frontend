@@ -157,5 +157,162 @@ export class CREAListingsService {
         console.log('✅ CREAListingsService.searchByLocation completed, found', result.count, 'listings')
         return result
     }
+
+    /**
+     * Search by agent name (fuzzy search)
+     */
+    static async searchByAgent(request: { agent_name: string; limit?: number }): Promise<CREAListingsResponse> {
+        console.log('🔍 CREAListingsService.searchByAgent called with:', request)
+
+        const { agent_name, limit = 100 } = request
+
+        const params = new URLSearchParams({
+            agent_name: agent_name,
+            limit: limit.toString(),
+        })
+
+        const response = await fetch(`${API_BASE_URL}/api/crea/listings/search/agent?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
+        }
+
+        const result = await response.json()
+        console.log('✅ CREAListingsService.searchByAgent completed, found', result.count, 'listings')
+        return result
+    }
+
+    /**
+     * Search by property (fuzzy search)
+     */
+    static async searchByProperty(request: { property_query: string; limit?: number }): Promise<CREAListingsResponse> {
+        console.log('🔍 CREAListingsService.searchByProperty called with:', request)
+
+        const { property_query, limit = 100 } = request
+
+        const params = new URLSearchParams({
+            property_query: property_query,
+            limit: limit.toString(),
+        })
+
+        const response = await fetch(`${API_BASE_URL}/api/crea/listings/search/property?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
+        }
+
+        const result = await response.json()
+        console.log('✅ CREAListingsService.searchByProperty completed, found', result.count, 'listings')
+        return result
+    }
+
+    /**
+     * Combined search with agent, property, and location filters
+     * @param exactMatch - If true, uses exact match endpoint (/api/crea/listings/search), otherwise uses fuzzy search (/api/crea/search)
+     */
+    static async combinedSearch(request: {
+        agent_name?: string
+        property_query?: string
+        property_type?: string
+        location?: string
+        configuration?: string
+        listing_type?: string
+        transaction_type?: string
+        min_price?: number
+        max_price?: number
+        limit?: number
+        exactMatch?: boolean
+    }): Promise<CREAListingsResponse> {
+        console.log('🔍 CREAListingsService.combinedSearch called with:', request)
+
+        const {
+            agent_name,
+            property_query,
+            property_type,
+            location,
+            configuration,
+            listing_type,
+            transaction_type,
+            min_price,
+            max_price,
+            limit = 100,
+            exactMatch = false
+        } = request
+
+        const params = new URLSearchParams({
+            limit: limit.toString(),
+        })
+
+        // Add optional parameters only if they have values
+        if (location && location.trim().length > 0) {
+            params.set('location', location.trim())
+        }
+        if (configuration && configuration.trim().length > 0) {
+            params.set('configuration', configuration.trim())
+        }
+        if (listing_type && listing_type.trim().length > 0) {
+            params.set('listing_type', listing_type.trim())
+        }
+        if (transaction_type && transaction_type.trim().length > 0) {
+            params.set('transaction_type', transaction_type.trim())
+        }
+        if (min_price !== undefined) {
+            params.set('min_price', min_price.toString())
+        }
+        if (max_price !== undefined) {
+            params.set('max_price', max_price.toString())
+        }
+
+        // For exact match: use agent_name and property_type
+        // For fuzzy match: use agent_name and property_query
+        if (exactMatch) {
+            if (agent_name && agent_name.trim().length > 0) {
+                params.set('agent_name', agent_name.trim())
+            }
+            if (property_type && property_type.trim().length > 0) {
+                params.set('property_type', property_type.trim())
+            }
+        } else {
+            if (agent_name && agent_name.trim().length > 0) {
+                params.set('agent_name', agent_name.trim())
+            }
+            if (property_query && property_query.trim().length > 0) {
+                params.set('property_query', property_query.trim())
+            }
+        }
+
+        // Choose endpoint based on exactMatch flag
+        const endpoint = exactMatch
+            ? `${API_BASE_URL}/api/crea/listings/search`  // Exact match endpoint
+            : `${API_BASE_URL}/api/crea/search`          // Fuzzy search endpoint
+
+        const response = await fetch(`${endpoint}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
+        }
+
+        const result = await response.json()
+        console.log(`✅ CREAListingsService.combinedSearch (${exactMatch ? 'exact' : 'fuzzy'}) completed, found`, result.count, 'listings')
+        return result
+    }
 }
 

@@ -21,16 +21,39 @@ import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import TableHeaderWithFilters from './TableHeaderWithFilters'
 import WhatsAppMessagePopover from './WhatsAppMessagePopover'
+import WhatsAppMessageDialog from './WhatsAppMessageDialog'
 
 interface CREAListingsTableProps {
     listings: CREAListing[]
     onLocationFilter?: (location: string) => void
     locationFilter?: string
+    onAgentFilter?: (agent: string) => void
+    agentFilter?: string
+    onPropertyFilter?: (property: string) => void
+    propertyFilter?: string
+    onTransactionTypeFilter?: (type: string) => void
+    transactionTypeFilter?: string
+    exactMatch?: boolean
+    onExactMatchToggle?: (exactMatch: boolean) => void
+    onResetFilters?: () => void
 }
 
-const ITEMS_PER_PAGE = 10
+const ITEMS_PER_PAGE = 50
 
-export default function CREAListingsTable({ listings, onLocationFilter, locationFilter }: CREAListingsTableProps) {
+export default function CREAListingsTable({
+    listings,
+    onLocationFilter,
+    locationFilter,
+    onAgentFilter,
+    agentFilter,
+    onPropertyFilter,
+    propertyFilter,
+    onTransactionTypeFilter,
+    transactionTypeFilter,
+    exactMatch,
+    onExactMatchToggle,
+    onResetFilters
+}: CREAListingsTableProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [expandedRow, setExpandedRow] = useState<string | null>(null)
 
@@ -82,12 +105,36 @@ export default function CREAListingsTable({ listings, onLocationFilter, location
                         <TableHeaderWithFilters
                             onLocationFilter={onLocationFilter}
                             locationFilter={locationFilter}
+                            onAgentFilter={onAgentFilter}
+                            agentFilter={agentFilter}
+                            onPropertyFilter={onPropertyFilter}
+                            propertyFilter={propertyFilter}
+                            onTransactionTypeFilter={onTransactionTypeFilter}
+                            transactionTypeFilter={transactionTypeFilter}
+                            exactMatch={exactMatch}
+                            onExactMatchToggle={onExactMatchToggle}
+                            onResetFilters={onResetFilters}
+                            hasActiveFilters={
+                                (locationFilter && locationFilter.trim().length > 0) ||
+                                (agentFilter && agentFilter.trim().length > 0) ||
+                                (propertyFilter && propertyFilter.trim().length > 0) ||
+                                (transactionTypeFilter && transactionTypeFilter.trim().length > 0) ||
+                                exactMatch
+                            }
                         />
                         <TableBody>
                             {paginatedListings.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="h-24 text-center">
-                                        No listings found.
+                                    <TableCell colSpan={8} className="h-32 text-center py-8">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <div className="text-gray-400 text-4xl mb-3">🏠</div>
+                                            <p className="text-base font-semibold text-gray-700 mb-1">
+                                                No listings found
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                Try adjusting your filters or check again later
+                                            </p>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -105,13 +152,24 @@ export default function CREAListingsTable({ listings, onLocationFilter, location
                                                         {listing.agent_name || 'N/A'}
                                                     </div>
                                                     {listing.agent_contact && (
-                                                        <WhatsAppMessagePopover listing={listing}>
-                                                            <button
-                                                                className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
-                                                            >
-                                                                📞 {listing.agent_contact}
-                                                            </button>
-                                                        </WhatsAppMessagePopover>
+                                                        <>
+                                                            {/* Popover version - for testing */}
+                                                            {/* <WhatsAppMessagePopover listing={listing}>
+                                                                <button
+                                                                    className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                                                >
+                                                                    📞 {listing.agent_contact}
+                                                                </button>
+                                                            </WhatsAppMessagePopover> */}
+                                                            {/* Dialog version - full screen modal */}
+                                                            <WhatsAppMessageDialog listing={listing}>
+                                                                <button
+                                                                    className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                                                >
+                                                                    📞 {listing.agent_contact}
+                                                                </button>
+                                                            </WhatsAppMessageDialog>
+                                                        </>
                                                     )}
                                                     {listing.company_name && (
                                                         <div className="text-xs text-gray-500">

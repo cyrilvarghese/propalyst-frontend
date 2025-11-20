@@ -63,16 +63,19 @@ export default function WhatsAppMessagePopover({ listing, children }: WhatsAppMe
     // Initialize phone number and generate message when popover opens
     useEffect(() => {
         if (isOpen) {
-            // Initialize phone number from listing
-            if (listing.agent_contact && !phoneNumber) {
+            // Initialize phone number from listing only once when popover opens
+            if (listing.agent_contact) {
                 setPhoneNumber(listing.agent_contact)
             }
             // Generate message if not already loaded
             if (!message && !isLoading && listing.agent_contact) {
                 generateMessage()
             }
+        } else {
+            // Reset phone number when popover closes
+            setPhoneNumber('')
         }
-    }, [isOpen, message, isLoading, listing.agent_contact, phoneNumber, generateMessage])
+    }, [isOpen, message, isLoading, listing.agent_contact, generateMessage])
 
     // Format phone number for WhatsApp
     const formatPhoneForWhatsApp = (phone: string): string => {

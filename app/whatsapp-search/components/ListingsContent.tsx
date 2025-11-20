@@ -7,12 +7,14 @@
 
 'use client'
 
-import { useState, useEffect, useTransition, useCallback } from 'react'
+import { useState, useEffect, useTransition, useCallback, useRef } from 'react'
 import { Card } from '@/components/ui/card'
-import { searchCREAListings, fetchCREAListings, searchCREAListingsByLocation } from '@/lib/api/crea-listings'
+import { searchCREAListings, fetchCREAListings, searchCREAListingsCombined } from '@/lib/api/crea-listings'
 import CREAListingsTable from './CREAListingsTable'
 import SearchInput from './SearchInput'
 import { CREAListing } from '@/lib/services/crea-listings.service'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 // High-end residential property background images
 const BACKGROUND_IMAGES = [
@@ -33,7 +35,12 @@ export default function ListingsContent() {
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [locationFilter, setLocationFilter] = useState('')
+    const [agentFilter, setAgentFilter] = useState('')
+    const [propertyFilter, setPropertyFilter] = useState('')
+    const [transactionTypeFilter, setTransactionTypeFilter] = useState('')
+    const [exactMatch, setExactMatch] = useState(false)
     const [isPending, startTransition] = useTransition()
+    const hasInitialized = useRef(false)
 
     // Initial load
     useEffect(() => {
@@ -47,6 +54,7 @@ export default function ListingsContent() {
                 setListings([])
             } finally {
                 setIsLoading(false)
+                hasInitialized.current = true
             }
         }
         loadListings()
@@ -62,9 +70,20 @@ export default function ListingsContent() {
                     const results = await searchCREAListings(query, 100)
                     setListings(results)
                 } else {
-                    // If query is empty, check if location filter is active
-                    if (locationFilter.trim().length > 0) {
-                        const results = await searchCREAListingsByLocation(locationFilter, 100)
+                    // If query is empty, check if any filters are active
+                    const hasFilters = agentFilter.trim().length > 0 ||
+                        propertyFilter.trim().length > 0 ||
+                        locationFilter.trim().length > 0
+
+                    if (hasFilters) {
+                        const results = await searchCREAListingsCombined({
+                            agent_name: agentFilter.trim() || undefined,
+                            property_query: exactMatch ? undefined : (propertyFilter.trim() || undefined),
+                            property_type: exactMatch ? (propertyFilter.trim() || undefined) : undefined,
+                            location: locationFilter.trim() || undefined,
+                            limit: 100,
+                            exactMatch: exactMatch
+                        })
                         setListings(results)
                     } else {
                         // Reload all listings
@@ -79,33 +98,77 @@ export default function ListingsContent() {
                 setIsLoading(false)
             }
         })
-    }, [locationFilter])
+    }, [agentFilter, propertyFilter, locationFilter])
 
-    // Handle location filter - just update state
+    // Handle filters - just update state
     const handleLocationFilter = useCallback((location: string) => {
         setLocationFilter(location)
     }, [])
 
-    // Effect to handle location filter changes with debounce
+    const handleAgentFilter = useCallback((agent: string) => {
+        setAgentFilter(agent)
+    }, [])
+
+    const handlePropertyFilter = useCallback((property: string) => {
+        setPropertyFilter(property)
+    }, [])
+
+    const handleTransactionTypeFilter = useCallback((type: string) => {
+        setTransactionTypeFilter(type)
+    }, [])
+
+    const handleExactMatchToggle = useCallback((exact: boolean) => {
+        setExactMatch(exact)
+    }, [])
+
+    const handleResetFilters = useCallback(() => {
+        setLocationFilter('')
+        setAgentFilter('')
+        setPropertyFilter('')
+        setTransactionTypeFilter('')
+        setExactMatch(false)
+    }, [])
+
+    // Effect to handle all filter changes with debounce - uses combined API
     useEffect(() => {
+        // Skip on initial mount - let the initial load effect handle it
+        if (!hasInitialized.current) {
+            return
+        }
+
         const timer = setTimeout(() => {
             startTransition(async () => {
                 setIsLoading(true)
                 try {
-                    if (locationFilter.trim().length > 0) {
-                        const results = await searchCREAListingsByLocation(locationFilter, 100)
+                    // Check if any filter or search query is active
+                    const hasFilters = agentFilter.trim().length > 0 ||
+                        propertyFilter.trim().length > 0 ||
+                        locationFilter.trim().length > 0 ||
+                        transactionTypeFilter.trim().length > 0
+
+                    if (hasFilters) {
+                        // Use combined search API with all active filters
+                        const results = await searchCREAListingsCombined({
+                            agent_name: agentFilter.trim() || undefined,
+                            property_query: exactMatch ? undefined : (propertyFilter.trim() || undefined),
+                            property_type: exactMatch ? (propertyFilter.trim() || undefined) : undefined,
+                            location: locationFilter.trim() || undefined,
+                            listing_type: transactionTypeFilter.trim() || undefined,
+                            limit: 100,
+                            exactMatch: exactMatch
+                        })
                         setListings(results)
                     } else if (searchQuery.trim().length > 0) {
-                        // If location is cleared but search query exists, use search query
+                        // If no filters but search query exists, use search query
                         const results = await searchCREAListings(searchQuery, 100)
                         setListings(results)
-                    } else if (locationFilter.length === 0 && searchQuery.length === 0) {
-                        // Both cleared, reload all
+                    } else {
+                        // All cleared, reload all
                         const data = await fetchCREAListings(100, 0)
                         setListings(data)
                     }
                 } catch (error) {
-                    console.error('Error filtering by location:', error)
+                    console.error('Error filtering listings:', error)
                     setListings([])
                 } finally {
                     setIsLoading(false)
@@ -114,7 +177,7 @@ export default function ListingsContent() {
         }, 500)
 
         return () => clearTimeout(timer)
-    }, [locationFilter, searchQuery])
+    }, [agentFilter, propertyFilter, locationFilter, transactionTypeFilter, searchQuery, exactMatch])
 
     const backgroundImage = BACKGROUND_IMAGES[0]
 
@@ -141,7 +204,9 @@ export default function ListingsContent() {
                         Browse property listings from CREA
                     </p>
                 </div>
-
+                <div className="mb-8">
+                    <Link href="/search" className="text-white hover:text-[#E6D3AF] hover:underline inline-flex items-center gap-2"><ArrowLeft className="w-4 h-4" /> Back to Search</Link>
+                </div>
                 {/* Search Input */}
                 <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-4 mb-6">
                     <SearchInput onSearch={handleSearch} isLoading={isLoading || isPending} />
@@ -164,23 +229,6 @@ export default function ListingsContent() {
                     </Card>
                 )} */}
 
-                {/* No results found */}
-                {!isLoading && listings.length === 0 && (
-                    <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
-                        <div className="text-center py-12">
-                            <div className="text-gray-400 text-5xl mb-4">🏠</div>
-                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                No listings found
-                            </h3>
-                            <p className="text-gray-500">
-                                {searchQuery
-                                    ? `No CREA listings match "${searchQuery}"`
-                                    : 'No CREA listings are currently available'}
-                            </p>
-                        </div>
-                    </Card>
-                )}
-
                 {/* Loading state */}
                 {isLoading && (
                     <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
@@ -193,12 +241,21 @@ export default function ListingsContent() {
                     </Card>
                 )}
 
-                {/* Listings Table */}
-                {!isLoading && listings.length > 0 && (
+                {/* Listings Table - Always show, even when empty */}
+                {!isLoading && (
                     <CREAListingsTable
                         listings={listings}
                         onLocationFilter={handleLocationFilter}
                         locationFilter={locationFilter}
+                        onAgentFilter={handleAgentFilter}
+                        agentFilter={agentFilter}
+                        onPropertyFilter={handlePropertyFilter}
+                        propertyFilter={propertyFilter}
+                        onTransactionTypeFilter={handleTransactionTypeFilter}
+                        transactionTypeFilter={transactionTypeFilter}
+                        exactMatch={exactMatch}
+                        onExactMatchToggle={handleExactMatchToggle}
+                        onResetFilters={handleResetFilters}
                     />
                 )}
             </div>
