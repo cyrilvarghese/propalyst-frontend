@@ -30,7 +30,7 @@ export default function SearchInput({ onSearch, isLoading }: SearchInputProps) {
         }
     }
 
-    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             e.preventDefault()
             handleSearch()
@@ -40,13 +40,13 @@ export default function SearchInput({ onSearch, isLoading }: SearchInputProps) {
     return (
         <div className="flex items-center gap-2">
             <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <Input
                     type="text"
                     placeholder="Search raw messages..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={handleKeyDown}
+                    onKeyPress={handleKeyPress}
                     className="pl-10 h-10 text-sm"
                     disabled={isLoading}
                 />
@@ -54,10 +54,19 @@ export default function SearchInput({ onSearch, isLoading }: SearchInputProps) {
             <Button
                 onClick={handleSearch}
                 disabled={isLoading}
-                className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white"
+                className="h-10 bg-accent px-6 hover:bg-accent/90 text-white disabled:opacity-50"
             >
-                <Search className="w-4 h-4 mr-2" />
-                Search
+                {isLoading ? (
+                    <>
+                        <Search className="w-4 h-4 mr-2 animate-pulse" />
+                        Searching...
+                    </>
+                ) : (
+                    <>
+                        <Search className="w-4 h-4 mr-2" />
+                        Search
+                    </>
+                )}
             </Button>
         </div>
     )

@@ -31,6 +31,8 @@ interface CREAListingsTableProps {
     agentFilter?: string
     onPropertyFilter?: (property: string) => void
     propertyFilter?: string
+    onBedroomCountFilter?: (bedroomCount: string) => void
+    bedroomCountFilter?: string
     onTransactionTypeFilter?: (type: string) => void
     transactionTypeFilter?: string
     exactMatch?: boolean
@@ -54,6 +56,8 @@ export default function CREAListingsTable({
     agentFilter,
     onPropertyFilter,
     propertyFilter,
+    onBedroomCountFilter,
+    bedroomCountFilter,
     onTransactionTypeFilter,
     transactionTypeFilter,
     exactMatch,
@@ -170,6 +174,8 @@ export default function CREAListingsTable({
                             agentFilter={agentFilter}
                             onPropertyFilter={onPropertyFilter}
                             propertyFilter={propertyFilter}
+                            onBedroomCountFilter={onBedroomCountFilter}
+                            bedroomCountFilter={bedroomCountFilter}
                             onTransactionTypeFilter={onTransactionTypeFilter}
                             transactionTypeFilter={transactionTypeFilter}
                             exactMatch={exactMatch}
@@ -179,6 +185,7 @@ export default function CREAListingsTable({
                                 (locationFilter && locationFilter.trim().length > 0) ||
                                 (agentFilter && agentFilter.trim().length > 0) ||
                                 (propertyFilter && propertyFilter.trim().length > 0) ||
+                                (bedroomCountFilter && bedroomCountFilter.trim().length > 0) ||
                                 (transactionTypeFilter && transactionTypeFilter.trim().length > 0) ||
                                 exactMatch
                             }
@@ -243,25 +250,25 @@ export default function CREAListingsTable({
                                                 <div className="font-medium">
                                                     {listing.property_type || 'Property'}
                                                 </div>
-                                                {listing.configuration && (
+                                                {listing.size_sqft && (
                                                     <div className="text-xs text-gray-500">
-                                                        {listing.configuration}
+                                                        {listing.size_sqft.toLocaleString('en-IN')} sq.ft
                                                     </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {listing.configuration ? (
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {listing.configuration}
+                                                    </Badge>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">N/A</span>
                                                 )}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="text-sm">
                                                     📍 {listing.location || 'No location'}
                                                 </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {listing.size_sqft ? (
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {listing.size_sqft.toLocaleString('en-IN')} sq.ft
-                                                    </Badge>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">N/A</span>
-                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="font-semibold">

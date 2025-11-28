@@ -149,14 +149,10 @@ export async function searchWhatsAppListings(
  * Search WhatsApp listings by raw message content
  */
 export async function searchWhatsAppListingsByMessage(
-    query: string,
+    query: string = '',
     limit: number = 100
 ): Promise<WhatsAppListingsResponse> {
     console.log('🚀 searchWhatsAppListingsByMessage called with:', { query, limit })
-
-    if (!query || query.trim().length === 0) {
-        throw new Error('Search query is required')
-    }
 
     try {
         const queryParams = new URLSearchParams({

@@ -9,9 +9,9 @@
 
 import { useState, useEffect, useTransition, useCallback, useRef } from 'react'
 import { Card } from '@/components/ui/card'
-import { fetchWhatsAppListings, searchWhatsAppListings, searchWhatsAppListingsByMessage, WhatsAppListing, WhatsAppListingsResponse } from '@/lib/api/whatsapp-listings'
+import { searchWhatsAppListingsByMessage, WhatsAppListing, WhatsAppListingsResponse } from '@/lib/api/whatsapp-listings'
 import CREAListingsTable from '../../whatsapp-search/components/CREAListingsTable'
-import SearchInput from '../../whatsapp-search/components/SearchInput'
+import SearchInput from './SearchInput'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
@@ -56,12 +56,12 @@ const PAGE_SIZE = 200 // Records displayed per page
 const MAX_RESULTS_PER_API_CALL = 600 // Records fetched per API call
 
 export default function ListingsContent() {
-    const [listings, setListings] = useState<WhatsAppListing[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [locationFilter, setLocationFilter] = useState('')
     const [agentFilter, setAgentFilter] = useState('')
     const [propertyFilter, setPropertyFilter] = useState('')
+    const [bedroomCountFilter, setBedroomCountFilter] = useState('')
     const [transactionTypeFilter, setTransactionTypeFilter] = useState('')
     const [exactMatch, setExactMatch] = useState(false)
     const [isPending, startTransition] = useTransition()
@@ -69,13 +69,11 @@ export default function ListingsContent() {
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1)
     const [totalCount, setTotalCount] = useState(0)
-    const [isSearchMode, setIsSearchMode] = useState(false)
 
     // Prefetched results storage
     // Stores all fetched results locally for pagination
     const [localResults, setLocalResults] = useState<WhatsAppListing[]>([])
     const [unfilteredResults, setUnfilteredResults] = useState<WhatsAppListing[]>([]) // Original unfiltered results
-    const [currentBatchStart, setCurrentBatchStart] = useState(0) // Starting index of current batch
     const [isPrefetching, setIsPrefetching] = useState(false)
     const prefetchControllerRef = useRef<AbortController | null>(null)
 
@@ -119,6 +117,7 @@ export default function ListingsContent() {
             location?: string
             agent?: string
             property?: string
+            bedroomCount?: string
             transactionType?: string
             exactMatch?: boolean
         }
@@ -150,16 +149,23 @@ export default function ListingsContent() {
             })
         }
 
-        // Filter by property type or project name
+        // Filter by property type (exact match from dropdown)
         if (filters.property && filters.property.trim().length > 0) {
-            const propertyLower = filters.property.trim().toLowerCase()
             filtered = filtered.filter(listing => {
-                const propertyType = (listing.property_type || '').toLowerCase()
-                const projectName = (listing.project_name || '').toLowerCase()
-                if (filters.exactMatch) {
-                    return propertyType === propertyLower || projectName === propertyLower
+                return listing.property_type === filters.property
+            })
+        }
+
+        // Filter by bedroom count
+        if (filters.bedroomCount && filters.bedroomCount.trim().length > 0) {
+            const bedroomCount = parseInt(filters.bedroomCount)
+            filtered = filtered.filter(listing => {
+                if (!listing.bedroom_count) return false
+                // For "6+", show 6 or more bedrooms
+                if (bedroomCount === 6) {
+                    return listing.bedroom_count >= 6
                 }
-                return propertyType.includes(propertyLower) || projectName.includes(propertyLower)
+                return listing.bedroom_count === bedroomCount
             })
         }
 
@@ -184,25 +190,23 @@ export default function ListingsContent() {
 
     // Apply local filters to unfiltered results whenever filters or unfilteredResults change
     useEffect(() => {
-        // Only apply filters if we're not in search mode (search uses its own filtering via API)
-        if (!isSearchMode) {
-            const filtered = applyLocalFilters(unfilteredResults, {
-                location: locationFilter,
-                agent: agentFilter,
-                property: propertyFilter,
-                transactionType: transactionTypeFilter,
-                exactMatch: exactMatch
-            })
-            setLocalResults(filtered)
-        }
+        const filtered = applyLocalFilters(unfilteredResults, {
+            location: locationFilter,
+            agent: agentFilter,
+            property: propertyFilter,
+            bedroomCount: bedroomCountFilter,
+            transactionType: transactionTypeFilter,
+            exactMatch: exactMatch
+        })
+        setLocalResults(filtered)
     }, [
         unfilteredResults,
         locationFilter,
         agentFilter,
         propertyFilter,
+        bedroomCountFilter,
         transactionTypeFilter,
         exactMatch,
-        isSearchMode,
         applyLocalFilters
     ])
 
@@ -210,8 +214,8 @@ export default function ListingsContent() {
     const currentPageListings = getCurrentPageListings(currentPage, localResults)
     const convertedListings = currentPageListings.map(convertToCREAListing)
 
-    // Use filtered count if filtering, otherwise use total count
-    const displayTotalCount = isSearchMode ? totalCount : localResults.length
+    // Use filtered count for display
+    const displayTotalCount = localResults.length
 
     /**
      * Calculate which batch a page belongs to
@@ -248,17 +252,9 @@ export default function ListingsContent() {
 
     /**
      * Prefetch next batch of results in the background
+     * Always uses /search/message API with current search query
      */
-    const prefetchNextBatch = useCallback(async (batchNumber: number, searchParams?: {
-        query?: string
-        filters?: {
-            agent_name?: string
-            property_query?: string
-            location?: string
-            message_type?: string
-            exactMatch?: boolean
-        }
-    }) => {
+    const prefetchNextBatch = useCallback(async (query: string = '') => {
         if (isPrefetching) return // Already prefetching
 
         setIsPrefetching(true)
@@ -266,31 +262,11 @@ export default function ListingsContent() {
         prefetchControllerRef.current = abortController
 
         try {
-            const offset = getBatchStartIndex(batchNumber)
-
-            let response: WhatsAppListingsResponse
-
-            if (searchParams?.query) {
-                // Message search
-                response = await searchWhatsAppListingsByMessage(
-                    searchParams.query,
-                    MAX_RESULTS_PER_API_CALL
-                )
-            } else if (searchParams?.filters) {
-                // Column filter search
-                const { agent_name, property_query, location, message_type, exactMatch } = searchParams.filters
-                response = await searchWhatsAppListings({
-                    agent_name,
-                    property_query,
-                    location,
-                    message_type,
-                    limit: MAX_RESULTS_PER_API_CALL,
-                    similarity_threshold: exactMatch ? 1.0 : 0.3,
-                })
-            } else {
-                // Regular listing fetch with offset
-                response = await fetchWhatsAppListings(MAX_RESULTS_PER_API_CALL, offset)
-            }
+            // Always use /search/message API with current query (can be empty)
+            const response = await searchWhatsAppListingsByMessage(
+                query,
+                MAX_RESULTS_PER_API_CALL
+            )
 
             if (!abortController.signal.aborted) {
                 setUnfilteredResults(prev => {
@@ -312,69 +288,64 @@ export default function ListingsContent() {
         }
     }, [isPrefetching])
 
-    // Initial load - NO API CALLS
-    // Start empty, wait for user to search
+    // Initial load - call /search/message with empty query
     useEffect(() => {
-        setIsLoading(false)
-        setUnfilteredResults([])
-        setLocalResults([])
-        setTotalCount(0)
-        setIsSearchMode(false)
-        hasInitialized.current = true
-    }, [])
+        const loadInitialData = async () => {
+            setIsLoading(true)
+            try {
+                const response = await searchWhatsAppListingsByMessage('', MAX_RESULTS_PER_API_CALL)
+                setUnfilteredResults(response.data)
+                setTotalCount(response.count)
 
-    // Handle filters - LOCAL FILTERING ONLY (no API calls)
-    // Filters are applied client-side to the already-loaded unfilteredResults
-    const handleFilters = useCallback(() => {
-        // Reset to page 1 when filters change
-        setCurrentPage(1)
+                // Prefetch next batch if more results available
+                if (response.count > MAX_RESULTS_PER_API_CALL) {
+                    prefetchNextBatch('')
+                }
+            } catch (error) {
+                console.error('Error loading initial listings:', error)
+                setUnfilteredResults([])
+                setTotalCount(0)
+            } finally {
+                setIsLoading(false)
+                hasInitialized.current = true
+            }
+        }
+        loadInitialData()
+    }, [prefetchNextBatch])
 
-        // Filters are automatically applied via the applyLocalFilters function
-        // No API calls needed - filtering happens locally on unfilteredResults
-    }, [])
+    // Filters are applied locally via useEffect - no separate handler needed
 
-    // Handle search - use useCallback to prevent unnecessary re-renders
+    // Handle search - always uses /search/message API
     const handleSearch = useCallback(async (query: string) => {
         setSearchQuery(query)
         setCurrentPage(1) // Reset to first page on new search
-        setCurrentBatchStart(0)
 
         startTransition(async () => {
             setIsLoading(true)
             try {
-                if (query.trim().length > 0) {
-                    // Fetch first batch with message search API
-                    const response = await searchWhatsAppListingsByMessage(
-                        query.trim(),
-                        MAX_RESULTS_PER_API_CALL
-                    )
+                // Always call /search/message API with query (can be empty)
+                const response = await searchWhatsAppListingsByMessage(
+                    query.trim(),
+                    MAX_RESULTS_PER_API_CALL
+                )
 
-                    // Store results locally (unfiltered for search results)
-                    setUnfilteredResults(response.data)
-                    setLocalResults(response.data)
-                    setTotalCount(response.count)
-                    setIsSearchMode(true)
+                // Store results locally
+                setUnfilteredResults(response.data)
+                setTotalCount(response.count)
 
-                    // Prefetch next batch if more results available
-                    if (response.count > MAX_RESULTS_PER_API_CALL) {
-                        prefetchNextBatch(1, { query: query.trim() })
-                    }
-                } else {
-                    // Clear search - reload unfiltered results from initial load
-                    // Reset to show all listings without search
-                    setCurrentPage(1)
-                    setIsSearchMode(false)
+                // Prefetch next batch if more results available
+                if (response.count > MAX_RESULTS_PER_API_CALL) {
+                    prefetchNextBatch(query.trim())
                 }
             } catch (error) {
                 console.error('Error searching listings:', error)
-                setLocalResults([])
+                setUnfilteredResults([])
                 setTotalCount(0)
-                setIsSearchMode(false)
             } finally {
                 setIsLoading(false)
             }
         })
-    }, [handleFilters, prefetchNextBatch])
+    }, [prefetchNextBatch])
 
     // Handle filter changes
     const handleLocationFilter = useCallback((location: string) => {
@@ -392,6 +363,11 @@ export default function ListingsContent() {
         setCurrentPage(1)
     }, [])
 
+    const handleBedroomCountFilter = useCallback((bedroomCount: string) => {
+        setBedroomCountFilter(bedroomCount)
+        setCurrentPage(1)
+    }, [])
+
     const handleTransactionTypeFilter = useCallback((type: string) => {
         setTransactionTypeFilter(type)
         setCurrentPage(1)
@@ -406,67 +382,50 @@ export default function ListingsContent() {
         setLocationFilter('')
         setAgentFilter('')
         setPropertyFilter('')
+        setBedroomCountFilter('')
         setTransactionTypeFilter('')
         setExactMatch(false)
         setCurrentPage(1)
     }, [])
 
     /**
-     * Handle page changes with prefetching
-     * - Displays data from localResults (filtered results)
-     * - Prefetches next batch of unfilteredResults when approaching end of current batch
+     * Handle page changes - pagination is local-only, fetches more data when needed
+     * - Navigation through pages uses localResults only (no API calls)
+     * - When clicking Next on last available page, fetch next batch
+     * - Prefetching happens in background when approaching end of current batch
      */
     const handlePageChange = useCallback(async (page: number) => {
-        // For pagination, we work with unfilteredResults for prefetching decisions
-        // but display filteredResults (localResults)
-        const recordsNeeded = page * PAGE_SIZE
-        const currentBatch = getBatchForPage(page)
+        const currentTotalPages = Math.ceil(displayTotalCount / PAGE_SIZE)
+        const isLastPage = page >= currentTotalPages
+        const hasMoreData = totalCount > unfilteredResults.length
 
-        // Check if we need more unfiltered data (for prefetching)
-        // Use unfilteredResults.length for prefetching decisions, not localResults.length
-        const needsMoreData = recordsNeeded > unfilteredResults.length && recordsNeeded <= totalCount
-
-        if (needsMoreData && !isSearchMode) {
-            // Need to fetch more unfiltered data
+        // If clicking Next on last page and more data is available, fetch it
+        if (isLastPage && hasMoreData && !isPrefetching) {
             setIsLoading(true)
             try {
-                // Fetch next batch of unfiltered results
-                await prefetchNextBatch(currentBatch)
+                await prefetchNextBatch(searchQuery.trim())
+                // After fetching, navigate to next page
+                setCurrentPage(page)
             } catch (error) {
-                console.error('Error fetching page data:', error)
+                console.error('Error fetching more data:', error)
             } finally {
                 setIsLoading(false)
             }
-        } else if (needsMoreData && isSearchMode) {
-            // For search mode, fetch more search results
-            setIsLoading(true)
-            try {
-                await prefetchNextBatch(currentBatch, { query: searchQuery.trim() })
-            } catch (error) {
-                console.error('Error fetching search page data:', error)
-            } finally {
-                setIsLoading(false)
-            }
+        } else {
+            // Normal navigation - just update page
+            setCurrentPage(page)
         }
 
         // Check if we should prefetch next batch (when on second-to-last page of current batch)
-        // Use unfilteredResults.length for prefetching threshold
         if (shouldPrefetchNextBatch(page, unfilteredResults.length) && !isPrefetching) {
-            const nextBatch = currentBatch + 1
-
-            // Prefetch in background
-            if (isSearchMode && searchQuery.trim().length > 0) {
-                prefetchNextBatch(nextBatch, { query: searchQuery.trim() })
-            } else {
-                // Prefetch more unfiltered results (filters will be applied locally)
-                prefetchNextBatch(nextBatch)
-            }
+            // Prefetch in background using current search query
+            prefetchNextBatch(searchQuery.trim())
         }
     }, [
+        displayTotalCount,
         unfilteredResults.length,
         totalCount,
         searchQuery,
-        isSearchMode,
         prefetchNextBatch,
         isPrefetching
     ])
@@ -485,7 +444,7 @@ export default function ListingsContent() {
     }, [currentPage])
 
     const backgroundImage = BACKGROUND_IMAGES[0]
-    const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+    const totalPages = Math.ceil(displayTotalCount / PAGE_SIZE)
 
     return (
         <div
@@ -543,6 +502,8 @@ export default function ListingsContent() {
                         agentFilter={agentFilter}
                         onPropertyFilter={handlePropertyFilter}
                         propertyFilter={propertyFilter}
+                        onBedroomCountFilter={handleBedroomCountFilter}
+                        bedroomCountFilter={bedroomCountFilter}
                         onTransactionTypeFilter={handleTransactionTypeFilter}
                         transactionTypeFilter={transactionTypeFilter}
                         exactMatch={exactMatch}
@@ -551,10 +512,8 @@ export default function ListingsContent() {
                         // Server-side pagination props
                         currentPage={currentPage}
                         totalPages={totalPages}
-                        totalCount={totalCount}
-                        onPageChange={(page: number) => {
-                            setCurrentPage(page)
-                        }}
+                        totalCount={displayTotalCount}
+                        onPageChange={handlePageChange}
                         itemsPerPage={PAGE_SIZE}
                     />
                 )}
