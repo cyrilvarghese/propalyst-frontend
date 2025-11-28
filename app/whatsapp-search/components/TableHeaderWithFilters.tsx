@@ -150,8 +150,8 @@ export default function TableHeaderWithFilters({
                         >
                             <SelectTrigger
                                 className={`h-8 text-xs ${bedroomCountFilter && bedroomCountFilter.trim().length > 0
-                                        ? 'border-accent focus:ring-accent focus:ring-2 bg-accent/5'
-                                        : ''
+                                    ? 'border-accent focus:ring-accent focus:ring-2 bg-accent/5'
+                                    : ''
                                     }`}
                             >
                                 <SelectValue placeholder="All bedrooms" />

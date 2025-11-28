@@ -8,5 +8,5 @@ import { redirect } from 'next/navigation'
  */
 
 export default function Home() {
-  redirect('/search')
+  redirect('/whatsapp-search-latest')
 }
