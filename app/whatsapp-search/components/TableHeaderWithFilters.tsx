@@ -133,7 +133,7 @@ export default function TableHeaderWithFilters({
                 <TableHead className="h-12 p-2">
                     {onTransactionTypeFilter && (
                         <Select
-                            value={transactionTypeFilter || ''}
+                            value={transactionTypeFilter || 'all'}
                             onValueChange={(value) => onTransactionTypeFilter(value === 'all' ? '' : value)}
                         >
                             <SelectTrigger className="h-8 text-xs">
@@ -141,10 +141,10 @@ export default function TableHeaderWithFilters({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All types</SelectItem>
-                                <SelectItem value="sale">Buy</SelectItem>
-                                <SelectItem value="sell">Sell</SelectItem>
-                                <SelectItem value="sale">Sale</SelectItem>
-                                <SelectItem value="requirement">Rent</SelectItem>
+                                <SelectItem value="supply_sale">Supply - Sale</SelectItem>
+                                <SelectItem value="supply_rent">Supply - Rent</SelectItem>
+                                <SelectItem value="demand_buy">Demand - Buy</SelectItem>
+                                <SelectItem value="demand_rent">Demand - Rent</SelectItem>
                             </SelectContent>
                         </Select>
                     )}

@@ -36,6 +36,12 @@ interface CREAListingsTableProps {
     exactMatch?: boolean
     onExactMatchToggle?: (exactMatch: boolean) => void
     onResetFilters?: () => void
+    // Server-side pagination props (optional)
+    currentPage?: number
+    totalPages?: number
+    totalCount?: number
+    onPageChange?: (page: number) => void
+    itemsPerPage?: number
 }
 
 const ITEMS_PER_PAGE = 50
@@ -52,16 +58,52 @@ export default function CREAListingsTable({
     transactionTypeFilter,
     exactMatch,
     onExactMatchToggle,
-    onResetFilters
+    onResetFilters,
+    // Server-side pagination props
+    currentPage: serverCurrentPage,
+    totalPages: serverTotalPages,
+    totalCount: serverTotalCount,
+    onPageChange,
+    itemsPerPage: serverItemsPerPage
 }: CREAListingsTableProps) {
-    const [currentPage, setCurrentPage] = useState(1)
+    // Client-side pagination state (only used if server-side pagination props are not provided)
+    const [clientCurrentPage, setClientCurrentPage] = useState(1)
     const [expandedRow, setExpandedRow] = useState<string | null>(null)
 
+    // Determine if we're using server-side or client-side pagination
+    const isServerSidePagination = serverCurrentPage !== undefined && serverTotalPages !== undefined && onPageChange !== undefined
+    const currentPage = isServerSidePagination ? serverCurrentPage! : clientCurrentPage
+    const itemsPerPage = serverItemsPerPage || ITEMS_PER_PAGE
+
     // Calculate pagination
-    const totalPages = Math.ceil(listings.length / ITEMS_PER_PAGE)
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-    const endIndex = startIndex + ITEMS_PER_PAGE
-    const paginatedListings = listings.slice(startIndex, endIndex)
+    const totalPages = isServerSidePagination 
+        ? serverTotalPages! 
+        : Math.ceil(listings.length / itemsPerPage)
+    
+    const startIndex = isServerSidePagination
+        ? (currentPage - 1) * itemsPerPage
+        : (currentPage - 1) * itemsPerPage
+    
+    const endIndex = isServerSidePagination
+        ? startIndex + listings.length
+        : startIndex + itemsPerPage
+    
+    const totalCount = isServerSidePagination 
+        ? serverTotalCount! 
+        : listings.length
+
+    // For server-side pagination, use all listings as-is; for client-side, slice them
+    const paginatedListings = isServerSidePagination 
+        ? listings 
+        : listings.slice(startIndex, endIndex)
+
+    const handlePageChange = (page: number) => {
+        if (isServerSidePagination) {
+            onPageChange!(page)
+        } else {
+            setClientCurrentPage(page)
+        }
+    }
 
     // Format price
     const formatPrice = (price: number): string => {
@@ -90,6 +132,25 @@ export default function CREAListingsTable({
             hour12: true,
         })
         return `${dateStr} ${timeStr}`
+    }
+
+    // Format message type for display
+    const formatMessageType = (messageType: string): string => {
+        const typeMap: { [key: string]: string } = {
+            'supply_sale': 'Supply - Sale',
+            'supply_rent': 'Supply - Rent',
+            'demand_buy': 'Demand - Buy',
+            'demand_rent': 'Demand - Rent',
+        }
+        return typeMap[messageType] || messageType
+    }
+
+    // Get badge variant based on message type
+    const getMessageTypeVariant = (messageType: string): 'default' | 'outline' | 'secondary' => {
+        if (messageType === 'supply_sale' || messageType === 'demand_buy') {
+            return 'default'
+        }
+        return 'outline'
     }
 
     const toggleRow = (id: string) => {
@@ -214,10 +275,10 @@ export default function CREAListingsTable({
                                             </TableCell>
                                             <TableCell>
                                                 <Badge
-                                                    variant={listing.transaction_type === 'Sale' ? 'default' : 'outline'}
+                                                    variant={getMessageTypeVariant(listing.transaction_type)}
                                                     className="text-xs"
                                                 >
-                                                    {listing.transaction_type}
+                                                    {formatMessageType(listing.transaction_type)}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
@@ -299,35 +360,69 @@ export default function CREAListingsTable({
             <div className="sticky bottom-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-lg rounded-t-lg p-4 z-50">
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-600">
-                        Showing {startIndex + 1} to {Math.min(endIndex, listings.length)} of {listings.length} listings
+                        Showing {startIndex + 1} to {Math.min(endIndex, totalCount)} of {totalCount} listings
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                             disabled={currentPage === 1}
                         >
                             <ChevronLeft className="h-4 w-4 mr-1" />
                             Previous
                         </Button>
                         <div className="flex items-center gap-1">
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                <Button
-                                    key={page}
-                                    variant={currentPage === page ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setCurrentPage(page)}
-                                    className="w-10"
-                                >
-                                    {page}
-                                </Button>
-                            ))}
+                            {(() => {
+                                const pages: (number | string)[] = []
+                                const maxVisible = 10
+                                
+                                if (totalPages <= maxVisible) {
+                                    // Show all pages if total is less than max
+                                    for (let i = 1; i <= totalPages; i++) {
+                                        pages.push(i)
+                                    }
+                                } else {
+                                    // Show first page
+                                    pages.push(1)
+                                    
+                                    let start = Math.max(2, currentPage - 2)
+                                    let end = Math.min(totalPages - 1, currentPage + 2)
+                                    
+                                    if (start > 2) pages.push('...')
+                                    
+                                    for (let i = start; i <= end; i++) {
+                                        pages.push(i)
+                                    }
+                                    
+                                    if (end < totalPages - 1) pages.push('...')
+                                    
+                                    // Show last page
+                                    pages.push(totalPages)
+                                }
+                                
+                                return pages.map((page, idx) => {
+                                    if (typeof page === 'string') {
+                                        return <span key={`ellipsis-${idx}`} className="px-2 text-gray-500">...</span>
+                                    }
+                                    return (
+                                        <Button
+                                            key={page}
+                                            variant={currentPage === page ? 'default' : 'outline'}
+                                            size="sm"
+                                            onClick={() => handlePageChange(page)}
+                                            className="w-10"
+                                        >
+                                            {page}
+                                        </Button>
+                                    )
+                                })
+                            })()}
                         </div>
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                             disabled={currentPage === totalPages}
                         >
                             Next

@@ -198,10 +198,10 @@ export default function ListingsContent() {
                 {/* Page Header */}
                 <div className="mb-8 text-center">
                     <h1 className="text-4xl sm:text-5xl font-bold mb-3 pt-8">
-                        <span className="text-white">CREA</span> <span className="text-[#E6D3AF]">Listings</span>
+                        <span className="text-white">Property</span> <span className="text-[#E6D3AF]">Listings</span>
                     </h1>
                     <p className="text-gray-200 text-lg">
-                        Browse property listings from CREA
+                        Browse property listings from Property Portal
                     </p>
                 </div>
                 <div className="mb-8">
@@ -223,7 +223,7 @@ export default function ListingsContent() {
                                 </p>
                             </div>
                             <div className="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
-                                Source: CREA
+                                    Source: Property Portal
                             </div>
                         </div>
                     </Card>
