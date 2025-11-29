@@ -17,11 +17,12 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import TableHeaderWithFilters from './TableHeaderWithFilters'
 import WhatsAppMessagePopover from './WhatsAppMessagePopover'
 import WhatsAppMessageDialog from './WhatsAppMessageDialog'
+import Pagination from './Pagination'
 
 interface CREAListingsTableProps {
     listings: CREAListing[]
@@ -38,12 +39,14 @@ interface CREAListingsTableProps {
     exactMatch?: boolean
     onExactMatchToggle?: (exactMatch: boolean) => void
     onResetFilters?: () => void
-    // Server-side pagination props (optional)
-    currentPage?: number
-    totalPages?: number
+    // Simplified pagination props
+    onPrevious?: () => void
+    onNext?: () => void
+    hasPrevious?: boolean
+    hasNext?: boolean
+    startIndex?: number
+    endIndex?: number
     totalCount?: number
-    onPageChange?: (page: number) => void
-    itemsPerPage?: number
 }
 
 const ITEMS_PER_PAGE = 50
@@ -63,51 +66,19 @@ export default function CREAListingsTable({
     exactMatch,
     onExactMatchToggle,
     onResetFilters,
-    // Server-side pagination props
-    currentPage: serverCurrentPage,
-    totalPages: serverTotalPages,
-    totalCount: serverTotalCount,
-    onPageChange,
-    itemsPerPage: serverItemsPerPage
+    // Pagination props
+    onPrevious,
+    onNext,
+    hasPrevious,
+    hasNext,
+    startIndex = 0,
+    endIndex = listings.length,
+    totalCount = listings.length
 }: CREAListingsTableProps) {
-    // Client-side pagination state (only used if server-side pagination props are not provided)
-    const [clientCurrentPage, setClientCurrentPage] = useState(1)
     const [expandedRow, setExpandedRow] = useState<string | null>(null)
 
-    // Determine if we're using server-side or client-side pagination
-    const isServerSidePagination = serverCurrentPage !== undefined && serverTotalPages !== undefined && onPageChange !== undefined
-    const currentPage = isServerSidePagination ? serverCurrentPage! : clientCurrentPage
-    const itemsPerPage = serverItemsPerPage || ITEMS_PER_PAGE
-
-    // Calculate pagination
-    const totalPages = isServerSidePagination 
-        ? serverTotalPages! 
-        : Math.ceil(listings.length / itemsPerPage)
-    
-    const startIndex = isServerSidePagination
-        ? (currentPage - 1) * itemsPerPage
-        : (currentPage - 1) * itemsPerPage
-    
-    const endIndex = isServerSidePagination
-        ? startIndex + listings.length
-        : startIndex + itemsPerPage
-    
-    const totalCount = isServerSidePagination 
-        ? serverTotalCount! 
-        : listings.length
-
-    // For server-side pagination, use all listings as-is; for client-side, slice them
-    const paginatedListings = isServerSidePagination 
-        ? listings 
-        : listings.slice(startIndex, endIndex)
-
-    const handlePageChange = (page: number) => {
-        if (isServerSidePagination) {
-            onPageChange!(page)
-        } else {
-            setClientCurrentPage(page)
-        }
-    }
+    // Use all listings as-is (already paginated by parent)
+    const paginatedListings = listings
 
     // Format price
     const formatPrice = (price: number): string => {
@@ -363,81 +334,20 @@ export default function CREAListingsTable({
                 </div>
             </div>
 
-            {/* Sticky Pagination */}
-            <div className="sticky bottom-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-lg rounded-t-lg p-4 z-50">
-                <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                        Showing {startIndex + 1} to {Math.min(endIndex, totalCount)} of {totalCount} listings
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                            disabled={currentPage === 1}
-                        >
-                            <ChevronLeft className="h-4 w-4 mr-1" />
-                            Previous
-                        </Button>
-                        <div className="flex items-center gap-1">
-                            {(() => {
-                                const pages: (number | string)[] = []
-                                const maxVisible = 10
-                                
-                                if (totalPages <= maxVisible) {
-                                    // Show all pages if total is less than max
-                                    for (let i = 1; i <= totalPages; i++) {
-                                        pages.push(i)
-                                    }
-                                } else {
-                                    // Show first page
-                                    pages.push(1)
-                                    
-                                    let start = Math.max(2, currentPage - 2)
-                                    let end = Math.min(totalPages - 1, currentPage + 2)
-                                    
-                                    if (start > 2) pages.push('...')
-                                    
-                                    for (let i = start; i <= end; i++) {
-                                        pages.push(i)
-                                    }
-                                    
-                                    if (end < totalPages - 1) pages.push('...')
-                                    
-                                    // Show last page
-                                    pages.push(totalPages)
-                                }
-                                
-                                return pages.map((page, idx) => {
-                                    if (typeof page === 'string') {
-                                        return <span key={`ellipsis-${idx}`} className="px-2 text-gray-500">...</span>
-                                    }
-                                    return (
-                                        <Button
-                                            key={page}
-                                            variant={currentPage === page ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => handlePageChange(page)}
-                                            className="w-10"
-                                        >
-                                            {page}
-                                        </Button>
-                                    )
-                                })
-                            })()}
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                            disabled={currentPage === totalPages}
-                        >
-                            Next
-                            <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                    </div>
-                </div>
-            </div>
+            {/* Pagination */}
+            {onPrevious && onNext && (
+                <Pagination
+                    onPrevious={onPrevious}
+                    onNext={onNext}
+                    hasPrevious={hasPrevious ?? false}
+                    hasNext={hasNext ?? false}
+                    startIndex={startIndex}
+                    endIndex={endIndex}
+                    totalCount={totalCount}
+                    itemName="listings"
+                    sticky={true}
+                />
+            )}
         </div>
     )
 }
