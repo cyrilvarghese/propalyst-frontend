@@ -9,14 +9,14 @@ import { useState, useCallback, useMemo } from 'react'
 
 interface UsePaginationOptions {
     pageSize: number
-    totalCount: number
+    totalCount?: number // Optional - not always known
     initialOffset?: number
 }
 
 interface UsePaginationReturn {
     offset: number
     currentPage: number
-    totalPages: number
+    totalPages: number | undefined // May be undefined if totalCount is unknown
     hasNext: boolean
     hasPrevious: boolean
     goToNext: () => void
@@ -36,12 +36,13 @@ export function usePagination(options: UsePaginationOptions): UsePaginationRetur
     }, [offset, pageSize])
 
     const totalPages = useMemo(() => {
-        return Math.ceil(totalCount / pageSize)
+        // If totalCount is not known, return undefined
+        return totalCount ? Math.ceil(totalCount / pageSize) : undefined
     }, [totalCount, pageSize])
 
-    const hasNext = useMemo(() => {
-        return offset + pageSize < totalCount
-    }, [offset, pageSize, totalCount])
+    // Always allow "Next" - total count is not known, so we always allow loading next page
+    // The API will return empty results if there are no more pages
+    const hasNext = true
 
     const hasPrevious = useMemo(() => {
         return offset > 0
@@ -52,14 +53,16 @@ export function usePagination(options: UsePaginationOptions): UsePaginationRetur
     }, [offset])
 
     const endIndex = useMemo(() => {
-        return Math.min(offset + pageSize, totalCount)
+        // If totalCount is known, use it; otherwise just use offset + pageSize
+        return totalCount !== undefined
+            ? Math.min(offset + pageSize, totalCount)
+            : offset + pageSize
     }, [offset, pageSize, totalCount])
 
+    // Always allow going to next page - API will handle if there are no more results
     const goToNext = useCallback(() => {
-        if (hasNext) {
-            setOffset(prev => prev + pageSize)
-        }
-    }, [hasNext, pageSize])
+        setOffset(prev => prev + pageSize)
+    }, [pageSize])
 
     const goToPrevious = useCallback(() => {
         if (hasPrevious) {
@@ -69,7 +72,8 @@ export function usePagination(options: UsePaginationOptions): UsePaginationRetur
 
     const goToPage = useCallback((page: number) => {
         const newOffset = (page - 1) * pageSize
-        if (newOffset >= 0 && newOffset < totalCount) {
+        // Only validate against totalCount if it's known
+        if (newOffset >= 0 && (totalCount === undefined || newOffset < totalCount)) {
             setOffset(newOffset)
         }
     }, [pageSize, totalCount])

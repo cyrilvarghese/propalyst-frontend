@@ -42,7 +42,10 @@ export default function Pagination({
             <div className="flex items-center justify-between">
                 {/* Item count display */}
                 <div className="text-sm text-gray-600">
-                    Showing {startIndex + 1} to {Math.min(endIndex, totalCount)} of {totalCount} {itemName}
+                    Showing {startIndex + 1} to {endIndex} {itemName}
+                    {totalCount > 0 && endIndex <= totalCount && endIndex < totalCount && (
+                        <> of {totalCount}</>
+                    )}
                 </div>
 
                 {/* Pagination controls */}

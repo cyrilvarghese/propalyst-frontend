@@ -75,10 +75,11 @@ export default function ListingsContent() {
         return convertListings(filteredListings)
     }, [filteredListings, convertListings])
 
-    // Pagination logic (based on filtered count for display, but uses API totalCount for navigation)
+    // Pagination logic - totalCount is optional since we don't always know the total
+    // Always allow "Next" - API will return empty results if there are no more pages
     const pagination = usePagination({
         pageSize: PAGE_SIZE,
-        totalCount: filteredListings.length > 0 ? filteredListings.length : totalCount,
+        totalCount: undefined, // Don't rely on totalCount
         initialOffset: 0
     })
 
@@ -171,11 +172,11 @@ export default function ListingsContent() {
                     </p>
                 </div> */}
 
-                <div className="mb-8">
-                    <Link href="/search" className="text-white hover:text-[#E6D3AF] hover:underline inline-flex items-center gap-2">
+                <div className="mb-8 flex flex-row items-center justify-start">
+                    <Link href="/search" className="text-blue-500    hover:text-blue-600 hover:underline inline-flex items-center gap-2">
                         <ArrowLeft className="w-4 h-4" /> Back to Search |
                     </Link>
-                    <p className="text-gray-200 text-lg">
+                    <p className="text-gray-200 text-lg ml-2">
                         Browse property listings from WhatsApp messages
                     </p>
 
@@ -240,8 +241,8 @@ export default function ListingsContent() {
                         hasPrevious={pagination.hasPrevious}
                         hasNext={pagination.hasNext}
                         startIndex={pagination.startIndex}
-                        endIndex={pagination.endIndex}
-                        totalCount={filteredListings.length}
+                        endIndex={pagination.startIndex + filteredListings.length}
+                        totalCount={0} // Don't show "of X" since total count is unknown
                     />
                 )}
             </div>
