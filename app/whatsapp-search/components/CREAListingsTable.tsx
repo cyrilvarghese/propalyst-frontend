@@ -182,7 +182,7 @@ export default function CREAListingsTable({
                                         <TableRow key={listing.id} className="hover:bg-gray-50">
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline" className="text-xs">
-                                                    📅 {formatDate(listing.created_at)}
+                                                    📅 {formatDate(listing.message_date)}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
