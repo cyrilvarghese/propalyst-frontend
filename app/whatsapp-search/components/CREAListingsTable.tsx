@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Bug } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import TableHeaderWithFilters from './TableHeaderWithFilters'
 import WhatsAppMessagePopover from './WhatsAppMessagePopover'
@@ -76,6 +76,7 @@ export default function CREAListingsTable({
     totalCount = listings.length
 }: CREAListingsTableProps) {
     const [expandedRow, setExpandedRow] = useState<string | null>(null)
+    const [copiedSQLId, setCopiedSQLId] = useState<string | null>(null)
 
     // Use all listings as-is (already paginated by parent)
     const paginatedListings = listings
@@ -130,6 +131,65 @@ export default function CREAListingsTable({
 
     const toggleRow = (id: string) => {
         setExpandedRow(expandedRow === id ? null : id)
+    }
+
+    // Copy debug SQL query to clipboard
+    const copyDebugSQL = async (listing: CREAListing) => {
+        const sqlQuery = `SELECT
+
+  -- processed table fields
+
+  p.id                             AS listing_id,
+
+  p.source_raw_message_id,
+
+  p.agent_name,
+
+  p.agent_contact,
+
+  p.raw_message                    AS processed_message,
+
+  p.message_date                   AS processed_message_date,
+
+  -- raw table fields
+
+  r.id                             AS raw_id,
+
+  r.sender_name                    AS raw_sender_name,
+
+  r.message_text                   AS raw_message,
+
+  r.message_date                   AS raw_message_date,
+
+  r.source_file,
+
+  r.line_number,
+
+  r.processed                      AS raw_processed_flag,
+
+  r.processed_at,
+
+  -- quick diff helpers
+
+  (p.message_date = r.message_date) AS dates_match,
+
+  (p.raw_message = r.message_text)  AS exact_text_match
+
+FROM public.whatsapp_listing_data p
+
+LEFT JOIN public.whatsapp_raw_messages r
+
+  ON r.id = p.source_raw_message_id
+
+WHERE p.id = '${listing.id}'::uuid;`
+
+        try {
+            await navigator.clipboard.writeText(sqlQuery)
+            setCopiedSQLId(listing.id)
+            setTimeout(() => setCopiedSQLId(null), 2000)
+        } catch (err) {
+            console.error('Failed to copy SQL query:', err)
+        }
     }
 
     return (
@@ -322,6 +382,13 @@ export default function CREAListingsTable({
                                                         <div className="text-sm text-gray-700 whitespace-pre-wrap break-words border-t border-gray-200 pt-2">
                                                             {listing.raw_message}
                                                         </div>
+                                                        <button
+                                                            onClick={() => copyDebugSQL(listing)}
+                                                            className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline border border-blue-300 rounded px-2 py-1 bg-blue-50 hover:bg-blue-100 transition-colors"
+                                                        >
+                                                            <Bug className="h-3 w-3" />
+                                                            {copiedSQLId === listing.id ? '✓ Copied!' : 'Copy Debug SQL'}
+                                                        </button>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
