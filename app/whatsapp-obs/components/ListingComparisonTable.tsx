@@ -41,7 +41,14 @@ export default function ListingComparisonTable({ data }: ListingComparisonTableP
         { key: 'agent_contact', label: 'Agent Contact', processedKey: 'agent_contact', rawKey: 'sender_name' },
         { key: 'agent_name', label: 'Agent Name', processedKey: 'agent_name', rawKey: null },
         { key: 'message_text', label: 'Message Text', processedKey: 'raw_message', rawKey: 'message_text' },
-         ]
+        { key: 'property_type', label: 'Property Type', processedKey: 'property_type', rawKey: null },
+        { key: 'location', label: 'Location', processedKey: 'location', rawKey: null },
+        { key: 'price', label: 'Price', processedKey: 'price', rawKey: null },
+        { key: 'area_sqft', label: 'Area (sqft)', processedKey: 'area_sqft', rawKey: null },
+        { key: 'bedroom_count', label: 'Bedrooms', processedKey: 'bedroom_count', rawKey: null },
+        { key: 'source_file', label: 'Source File', processedKey: null, rawKey: 'source_file' },
+        { key: 'line_number', label: 'Line Number', processedKey: null, rawKey: 'line_number' },
+    ]
 
     const formatValue = (value: any): string => {
         if (value === null || value === undefined) return 'N/A'
@@ -58,7 +65,7 @@ export default function ListingComparisonTable({ data }: ListingComparisonTableP
 
     return (
         <div className="space-y-4">
-            
+
 
             {/* Comparison Table */}
             <div className="border rounded-md overflow-hidden">
@@ -76,13 +83,13 @@ export default function ListingComparisonTable({ data }: ListingComparisonTableP
                                 const processedValue = field.processedKey ? processed[field.processedKey] : null
                                 const rawValue = field.rawKey ? raw[field.rawKey] : null
                                 // Only show rows where at least one side has actual data (not null/undefined)
-                                return processedValue !== null && processedValue !== undefined || 
-                                       rawValue !== null && rawValue !== undefined
+                                return processedValue !== null && processedValue !== undefined ||
+                                    rawValue !== null && rawValue !== undefined
                             })
                             .map((field) => {
                                 const processedValue = field.processedKey ? processed[field.processedKey] : null
                                 const rawValue = field.rawKey ? raw[field.rawKey] : null
-                                const match = field.processedKey && field.rawKey 
+                                const match = field.processedKey && field.rawKey
                                     ? areValuesEqual(processedValue, rawValue)
                                     : null
 
@@ -103,7 +110,7 @@ export default function ListingComparisonTable({ data }: ListingComparisonTableP
                                                 {hasRawData ? formatValue(rawValue) : '-'}
                                             </div>
                                         </TableCell>
-                                         
+
                                     </TableRow>
                                 )
                             })}

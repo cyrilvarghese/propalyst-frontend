@@ -12,7 +12,7 @@ import { useEffect, useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import CREAListingsTable from '../../whatsapp-search/components/CREAListingsTable'
+import CREAListingsTable from '../../whatsapp-obs/components/CREAListingsTable'
 import SearchInput from './SearchInput'
 import { useWhatsAppListings } from '../hooks/useWhatsAppListings'
 import { usePagination } from '../hooks/usePagination'
@@ -173,8 +173,8 @@ export default function ListingsContent() {
                 </div> */}
 
                 <div className="mb-8 flex flex-row items-center justify-start">
-                    <Link href="/search" className="text-blue-500    hover:text-blue-600 hover:underline inline-flex items-center gap-2">
-                        <ArrowLeft className="w-4 h-4" /> Back to Search |
+                    <Link href="/search-web" className="text-blue-500    hover:text-blue-600 hover:underline inline-flex items-center gap-2">
+                        <ArrowLeft className="w-4 h-4" /> Back to Web Search |
                     </Link>
                     <p className="text-gray-200 text-lg ml-2">
                         Browse property listings from WhatsApp messages
