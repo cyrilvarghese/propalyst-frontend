@@ -283,6 +283,9 @@ export default function CREAListingsTable({
                                             <TableRow>
                                                 <TableCell colSpan={8} className="bg-gray-50">
                                                     <div className="space-y-2 py-2">
+                                                        <div className="flex justify-start mb-2">
+                                                            <CopyLinkButton listing={listing} />
+                                                        </div>
                                                         {(listing.status || listing.facing || listing.floor || listing.parking || listing.furnishing) && (
                                                             <div className="flex flex-wrap gap-2">
                                                                 {listing.status && (
@@ -325,15 +328,9 @@ export default function CREAListingsTable({
                                                         <div className="text-sm text-gray-700 whitespace-pre-wrap break-words border-t border-gray-200 pt-2">
                                                             {listing.raw_message}
                                                         </div>
-                                                        <div className="flex gap-2 justify-between">
-                                                            <div>
-                                                                <CopyLinkButton listing={listing} />
-
-                                                            </div>
-                                                            <div className="flex gap-2">
-                                                                <CopyDebugSQLButton listing={listing} />
-                                                                <CompareListingButton listing={listing} />
-                                                            </div>
+                                                        <div className="flex gap-2 flex-wrap">
+                                                            <CopyDebugSQLButton listing={listing} />
+                                                            <CompareListingButton listing={listing} />
                                                         </div>
                                                     </div>
                                                 </TableCell>

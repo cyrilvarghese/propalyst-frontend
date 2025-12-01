@@ -216,7 +216,7 @@ export default function ListingDetailContent({ listingId }: ListingDetailContent
                                     <Button
                                         variant="outline"
                                         onClick={() => window.open(getWhatsAppLink(processed.agent_contact), '_blank')}
-                                        className="w-full bg-green-500 text-white"
+                                        className="w-full bg-green-300 text-gray-900 hover:bg-green-400"
 
                                     >
                                         <MessageSquare className="w-4 h-4" />
@@ -279,12 +279,12 @@ export default function ListingDetailContent({ listingId }: ListingDetailContent
 
                             {/* Raw Message Accordion (Debug) */}
                             {raw?.message_text && (
-                                <div className="border-t pt-4 mt-4">
+                                <div className="border-t pt-4 mt-4 pb-4 bg-gray-200 text-primary-foreground px-2 py-1 rounded-md">
                                     <button
                                         onClick={() => setShowRawMessage(!showRawMessage)}
                                         className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 transition-colors"
                                     >
-                                        <span className="font-medium">Raw Message (Debug)</span>
+                                        <span className="font-medium ">Original Message</span>
                                         {showRawMessage ? (
                                             <ChevronUp className="w-4 h-4" />
                                         ) : (
@@ -292,7 +292,7 @@ export default function ListingDetailContent({ listingId }: ListingDetailContent
                                         )}
                                     </button>
                                     {showRawMessage && (
-                                        <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+                                        <div className="mt-3 p-3 bg-white rounded-lg border">
                                             <p className="text-xs text-gray-500 mb-2">Source: {raw.source_file || 'N/A'} (Line {raw.line_number || 'N/A'})</p>
                                             <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">
                                                 {raw.message_text}
