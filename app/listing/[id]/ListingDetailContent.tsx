@@ -202,7 +202,7 @@ export default function ListingDetailContent({ listingId }: ListingDetailContent
                                 )}
 
                                 {/* Phone Number */}
-                                <div className="mb-3  flex flex-row gap-6">
+                                <div className="mb-3  flex flex-row flex-col-sm gap-6">
                                     <Button
                                         variant="outline"
 
