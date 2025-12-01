@@ -50,13 +50,13 @@ export default function ListingComparisonDialog({ listing, children }: ListingCo
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/whatsapp-listings/${listing.id}/source`)
-            
+
             if (!response.ok) {
                 throw new Error(`Failed to fetch comparison data: ${response.statusText}`)
             }
 
             const result = await response.json()
-            
+
             if (result.success && result.data) {
                 setComparisonData(result.data)
             } else {
