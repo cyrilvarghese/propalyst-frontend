@@ -25,6 +25,7 @@ import WhatsAppMessageDialog from './WhatsAppMessageDialog'
 import Pagination from './Pagination'
 import CopyDebugSQLButton from './CopyDebugSQLButton'
 import CompareListingButton from './CompareListingButton'
+import RetryListingButton from './RetryListingButton'
 import CopyLinkButton from './CopyLinkButton'
 
 interface CREAListingsTableProps {
@@ -329,6 +330,7 @@ export default function CREAListingsTable({
                                                             {listing.raw_message}
                                                         </div>
                                                         <div className="flex gap-2 flex-wrap">
+                                                            <RetryListingButton listing={listing} />
                                                             <CopyDebugSQLButton listing={listing} />
                                                             <CompareListingButton listing={listing} />
                                                         </div>

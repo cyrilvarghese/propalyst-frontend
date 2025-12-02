@@ -61,6 +61,13 @@ export interface CREAListingsResponse {
     message: string
 }
 
+export interface UpdateListingResponse {
+    success: boolean
+    status: string
+    message: string
+    data?: CREAListing
+}
+
 /**
  * CREA Listings Service
  */
@@ -307,6 +314,34 @@ export class CREAListingsService {
 
         const result = await response.json()
         console.log(`✅ CREAListingsService.combinedSearch (${exactMatch ? 'exact' : 'fuzzy'}) completed, found`, result.count, 'listings')
+        return result
+    }
+
+    /**
+     * Update a listing
+     * Uses PATCH method to update listing data
+     */
+    static async updateListing(
+        listingId: string,
+        updateData: Partial<CREAListing>
+    ): Promise<UpdateListingResponse> {
+        console.log('🔍 CREAListingsService.updateListing called with:', { listingId, updateData })
+
+        const response = await fetch(`${API_BASE_URL}/api/crea/listings/${listingId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updateData),
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
+        }
+
+        const result = await response.json()
+        console.log('✅ CREAListingsService.updateListing completed:', result.message)
         return result
     }
 }
