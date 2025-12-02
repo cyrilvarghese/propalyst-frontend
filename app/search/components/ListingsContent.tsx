@@ -42,7 +42,7 @@ export default function ListingsContent() {
     const isUpdatingURL = useRef(false)
 
     // Read initial values from URL params
-    const initialSearch = searchParams.get('search') || ''
+    const initialSearch = searchParams.get('query') || ''
     const initialLocation = searchParams.get('location') || ''
     const initialAgent = searchParams.get('agent') || ''
     const initialProperty = searchParams.get('property') || ''
@@ -78,7 +78,7 @@ export default function ListingsContent() {
 
     // Update URL params when filters or search change
     const updateURLParams = useCallback((updates: {
-        search?: string
+        query?: string
         location?: string
         agent?: string
         property?: string
@@ -91,9 +91,9 @@ export default function ListingsContent() {
         isUpdatingURL.current = true
         const params = new URLSearchParams(searchParams.toString())
 
-        if (updates.search !== undefined) {
-            if (updates.search) params.set('search', updates.search)
-            else params.delete('search')
+        if (updates.query !== undefined) {
+            if (updates.query) params.set('query', updates.query)
+            else params.delete('query')
         }
         if (updates.location !== undefined) {
             if (updates.location) params.set('location', updates.location)
@@ -182,7 +182,7 @@ export default function ListingsContent() {
     // Handle search - update URL param
     const handleSearch = useCallback(async (query: string) => {
         pagination.goToPage(1) // Reset to first page
-        updateURLParams({ search: query })
+        updateURLParams({ query: query })
         await search(query)
     }, [pagination, search, updateURLParams])
 

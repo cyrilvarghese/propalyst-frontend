@@ -8,7 +8,6 @@
 'use client'
 
 import { useState, useEffect, useTransition, useCallback, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { searchCREAListings, fetchCREAListings, searchCREAListingsCombined } from '@/lib/api/crea-listings'
 import CREAListingsTable from './CREAListingsTable'
@@ -32,104 +31,24 @@ const BACKGROUND_IMAGES = [
 ]
 
 export default function ListingsContent() {
-    const router = useRouter()
-    const searchParams = useSearchParams()
     const [listings, setListings] = useState<CREAListing[]>([])
     const [isLoading, setIsLoading] = useState(true)
-
-    // Initialize state from URL params
-    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
-    const [locationFilter, setLocationFilter] = useState(searchParams.get('location') || '')
-    const [agentFilter, setAgentFilter] = useState(searchParams.get('agent') || '')
-    const [propertyFilter, setPropertyFilter] = useState(searchParams.get('property') || '')
-    const [transactionTypeFilter, setTransactionTypeFilter] = useState(searchParams.get('transactionType') || '')
-    const [bedroomCountFilter, setBedroomCountFilter] = useState(searchParams.get('bedrooms') || '')
-    const [exactMatch, setExactMatch] = useState(searchParams.get('exactMatch') === 'true')
-
+    const [searchQuery, setSearchQuery] = useState('')
+    const [locationFilter, setLocationFilter] = useState('')
+    const [agentFilter, setAgentFilter] = useState('')
+    const [propertyFilter, setPropertyFilter] = useState('')
+    const [transactionTypeFilter, setTransactionTypeFilter] = useState('')
+    const [exactMatch, setExactMatch] = useState(false)
     const [isPending, startTransition] = useTransition()
     const hasInitialized = useRef(false)
-    const isUpdatingURL = useRef(false)
 
-    // Function to update URL params
-    const updateURLParams = useCallback((updates: {
-        search?: string
-        location?: string
-        agent?: string
-        property?: string
-        transactionType?: string
-        bedrooms?: string
-        exactMatch?: boolean
-    }) => {
-        if (isUpdatingURL.current) return
-
-        const params = new URLSearchParams(searchParams.toString())
-
-        // Update params
-        if (updates.search !== undefined) {
-            if (updates.search) params.set('search', updates.search)
-            else params.delete('search')
-        }
-        if (updates.location !== undefined) {
-            if (updates.location) params.set('location', updates.location)
-            else params.delete('location')
-        }
-        if (updates.agent !== undefined) {
-            if (updates.agent) params.set('agent', updates.agent)
-            else params.delete('agent')
-        }
-        if (updates.property !== undefined) {
-            if (updates.property) params.set('property', updates.property)
-            else params.delete('property')
-        }
-        if (updates.transactionType !== undefined) {
-            if (updates.transactionType) params.set('transactionType', updates.transactionType)
-            else params.delete('transactionType')
-        }
-        if (updates.bedrooms !== undefined) {
-            if (updates.bedrooms) params.set('bedrooms', updates.bedrooms)
-            else params.delete('bedrooms')
-        }
-        if (updates.exactMatch !== undefined) {
-            if (updates.exactMatch) params.set('exactMatch', 'true')
-            else params.delete('exactMatch')
-        }
-
-        const newURL = params.toString() ? `?${params.toString()}` : ''
-        router.replace(newURL, { scroll: false })
-    }, [router, searchParams])
-
-    // Initial load - check URL params first
+    // Initial load
     useEffect(() => {
         const loadListings = async () => {
             setIsLoading(true)
             try {
-                // Check if we have any params to search with
-                const hasSearch = searchQuery.trim().length > 0
-                const hasFilters = agentFilter.trim().length > 0 ||
-                    propertyFilter.trim().length > 0 ||
-                    locationFilter.trim().length > 0 ||
-                    transactionTypeFilter.trim().length > 0 ||
-                    bedroomCountFilter.trim().length > 0
-
-                if (hasSearch) {
-                    const results = await searchCREAListings(searchQuery, 100)
-                    setListings(results)
-                } else if (hasFilters) {
-                    const results = await searchCREAListingsCombined({
-                        agent_name: agentFilter.trim() || undefined,
-                        property_query: exactMatch ? undefined : (propertyFilter.trim() || undefined),
-                        property_type: exactMatch ? (propertyFilter.trim() || undefined) : undefined,
-                        location: locationFilter.trim() || undefined,
-                        transaction_type: transactionTypeFilter.trim() || undefined,
-                        configuration: bedroomCountFilter.trim() || undefined,
-                        limit: 100,
-                        exactMatch: exactMatch
-                    })
-                    setListings(results)
-                } else {
-                    const data = await fetchCREAListings(100, 0)
-                    setListings(data)
-                }
+                const data = await fetchCREAListings(100, 0)
+                setListings(data)
             } catch (error) {
                 console.error('Error loading listings:', error)
                 setListings([])
@@ -139,7 +58,7 @@ export default function ListingsContent() {
             }
         }
         loadListings()
-    }, []) // Only run on mount
+    }, [])
 
     // Handle search - use useCallback to prevent unnecessary re-renders
     const handleSearch = useCallback(async (query: string) => {
