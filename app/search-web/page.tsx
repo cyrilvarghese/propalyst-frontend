@@ -94,7 +94,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
         {/* SearchFilters - Client Component with interactive inputs/buttons */}
         <div className="mb-8">
-          <Link href="/whatsapp-search" className="text-white hover:text-[#E6D3AF] hover:underline">WhatsApp Search</Link>
+          <Link href="/whatsapp-obs" className="text-white hover:text-[#E6D3AF] hover:underline">WhatsApp Search</Link>
         </div>
         <SearchFilters />
 

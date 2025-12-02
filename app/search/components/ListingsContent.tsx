@@ -49,6 +49,7 @@ export default function ListingsContent() {
     const initialBedrooms = searchParams.get('bedrooms') || ''
     const initialTransactionType = searchParams.get('transactionType') || ''
     const initialExactMatch = searchParams.get('exactMatch') === 'true'
+    const leadId = searchParams.get('lead_id') || ''
 
     // API calls and data fetching
     const {
@@ -85,6 +86,7 @@ export default function ListingsContent() {
         bedrooms?: string
         transactionType?: string
         exactMatch?: boolean
+        lead_id?: string
     }) => {
         if (isUpdatingURL.current) return
 
@@ -118,6 +120,10 @@ export default function ListingsContent() {
         if (updates.exactMatch !== undefined) {
             if (updates.exactMatch) params.set('exactMatch', 'true')
             else params.delete('exactMatch')
+        }
+        if (updates.lead_id !== undefined) {
+            if (updates.lead_id) params.set('lead_id', updates.lead_id)
+            else params.delete('lead_id')
         }
 
         const newURL = params.toString() ? `?${params.toString()}` : ''
@@ -271,14 +277,20 @@ export default function ListingsContent() {
                     </p>
                 </div> */}
 
-                <div className="mb-8 flex flex-row items-center justify-start">
-                    <Link href="/search-web" className="text-blue-500    hover:text-blue-600 hover:underline inline-flex items-center gap-2">
-                        <ArrowLeft className="w-4 h-4" /> Back to Web Search |
-                    </Link>
-                    <p className="text-gray-200 text-lg ml-2">
-                        Browse property listings from WhatsApp messages
-                    </p>
-
+                <div className="mb-8 flex flex-row items-center justify-between">
+                    <div className="flex flex-row items-center justify-start">
+                        <Link href="/search-web" className="text-blue-500    hover:text-blue-600 hover:underline inline-flex items-center gap-2">
+                            <ArrowLeft className="w-4 h-4" /> Back to Web Search |
+                        </Link>
+                        <p className="text-gray-200 text-lg ml-2">
+                            Browse property listings from WhatsApp messages
+                        </p>
+                    </div>
+                    {leadId && (
+                        <div className="text-gray-200 text-sm bg-gray-700/50 px-4 py-2 rounded-lg">
+                            <span className="font-semibold">Lead ID:</span> <span className="font-mono">{leadId}</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Search Input */}
