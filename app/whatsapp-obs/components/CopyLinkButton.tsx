@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link as LinkIcon } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 
@@ -17,6 +17,16 @@ interface CopyLinkButtonProps {
 
 export default function CopyLinkButton({ listing }: CopyLinkButtonProps) {
     const [copied, setCopied] = useState(false)
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+        }
+    }, [])
 
     const copyLink = async () => {
         // Create a link to the listing detail page
@@ -25,8 +35,17 @@ export default function CopyLinkButton({ listing }: CopyLinkButtonProps) {
 
         try {
             await navigator.clipboard.writeText(listingUrl)
+
+            // Clear any existing timeout before setting a new one
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+
             setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
+            timeoutRef.current = setTimeout(() => {
+                setCopied(false)
+                timeoutRef.current = null
+            }, 2000)
         } catch (err) {
             console.error('Failed to copy link:', err)
         }

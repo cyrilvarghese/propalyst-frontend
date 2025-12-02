@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface JsonResultCardProps {
   result: any
@@ -23,6 +23,16 @@ interface JsonResultCardProps {
 export default function JsonResultCard({ result, index, origQuery }: JsonResultCardProps) {
   const router = useRouter()
   const [copied, setCopied] = useState(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
 
   // Handle URL click - navigate to listing page to scrape and show properties
   const handleUrlClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -40,8 +50,17 @@ export default function JsonResultCard({ result, index, origQuery }: JsonResultC
   const handleCopyContent = async () => {
     try {
       await navigator.clipboard.writeText(result.rawContent || '')
+
+      // Clear any existing timeout before setting a new one
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      timeoutRef.current = setTimeout(() => {
+        setCopied(false)
+        timeoutRef.current = null
+      }, 2000)
     } catch (err) {
       console.error('Failed to copy:', err)
     }
@@ -50,8 +69,17 @@ export default function JsonResultCard({ result, index, origQuery }: JsonResultC
   const handleCopyJson = async () => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(result, null, 2))
+
+      // Clear any existing timeout before setting a new one
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      timeoutRef.current = setTimeout(() => {
+        setCopied(false)
+        timeoutRef.current = null
+      }, 2000)
     } catch (err) {
       console.error('Failed to copy:', err)
     }

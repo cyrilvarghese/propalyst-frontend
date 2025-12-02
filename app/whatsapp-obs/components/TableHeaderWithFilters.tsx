@@ -70,34 +70,7 @@ export default function TableHeaderWithFilters({
             {/* Filter Row - Sticky below header */}
             <TableRow className="bg-gray-50 border-b sticky top-[48px] z-10">
                 <TableHead className="h-12 p-2">
-                    <div className="flex items-center gap-2">
-                        {onExactMatchToggle && (
-                            <Button
-                                variant={exactMatch ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => onExactMatchToggle(!exactMatch)}
-                                className="h-8 text-xs gap-1.5"
-                            >
-                                {exactMatch ? (
-                                    <CheckCircle2 className="h-3 w-3" />
-                                ) : (
-                                    <Circle className="h-3 w-3" />
-                                )}
-                                Exact
-                            </Button>
-                        )}
-                        {hasActiveFilters && onResetFilters && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={onResetFilters}
-                                className="h-8 w-8 p-0 text-xs"
-                                title="Reset all filters"
-                            >
-                                <X className="h-3 w-3" />
-                            </Button>
-                        )}
-                    </div>
+
                 </TableHead>
                 <TableHead className="h-12 p-2">
                     {onAgentFilter && (

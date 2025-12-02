@@ -12,7 +12,7 @@
 'use client' // ← This makes it a Client Component
 
 import { useState, useTransition, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -22,6 +22,7 @@ export default function SearchFilters() {
   // 🔗 Next.js hooks for URL navigation (only work in Client Components!)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
 
   // 📝 Local state for input (controlled component)
@@ -32,9 +33,9 @@ export default function SearchFilters() {
     if (!searchParams.get('provider')) {
       const params = new URLSearchParams(searchParams.toString())
       params.set('provider', 'tavily')
-      router.replace(`/search?${params.toString()}`)
+      router.replace(`${pathname}?${params.toString()}`)
     }
-  }, [searchParams, router])
+  }, [searchParams, router, pathname])
 
   // Check if all required fields are present for search
   const canSearch = query.trim().length > 0
@@ -47,14 +48,14 @@ export default function SearchFilters() {
     if (!canSearch) {
       return // Don't search if required fields are missing
     }
-    
+
     // Create new URLSearchParams from existing params
     const params = new URLSearchParams(searchParams.toString())
     params.set('query', query.trim())
-    
+
     // Use startTransition for smooth UI updates
     startTransition(() => {
-      router.push(`/search?${params.toString()}`)
+      router.push(`${pathname}?${params.toString()}`)
     })
   }
 
@@ -96,7 +97,7 @@ export default function SearchFilters() {
       </div>
 
       {/* Provider hidden but set to tavily by default */}
-      
+
     </Card>
   )
 }

@@ -8,7 +8,8 @@
 
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -36,6 +37,19 @@ const BACKGROUND_IMAGES = [
 const PAGE_SIZE = 200 // Records per page
 
 export default function ListingsContent() {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const isUpdatingURL = useRef(false)
+
+    // Read initial values from URL params
+    const initialSearch = searchParams.get('search') || ''
+    const initialLocation = searchParams.get('location') || ''
+    const initialAgent = searchParams.get('agent') || ''
+    const initialProperty = searchParams.get('property') || ''
+    const initialBedrooms = searchParams.get('bedrooms') || ''
+    const initialTransactionType = searchParams.get('transactionType') || ''
+    const initialExactMatch = searchParams.get('exactMatch') === 'true'
+
     // API calls and data fetching
     const {
         listings: rawListings,
@@ -46,9 +60,9 @@ export default function ListingsContent() {
         search,
         loadPage,
         reset: resetListings
-    } = useWhatsAppListings({ pageSize: PAGE_SIZE })
+    } = useWhatsAppListings({ pageSize: PAGE_SIZE, initialQuery: initialSearch })
 
-    // Filtering logic
+    // Filtering logic - initialize from URL
     const {
         filters,
         setLocation,
@@ -61,6 +75,72 @@ export default function ListingsContent() {
         applyFilters,
         hasActiveFilters
     } = useListingsFilters()
+
+    // Update URL params when filters or search change
+    const updateURLParams = useCallback((updates: {
+        search?: string
+        location?: string
+        agent?: string
+        property?: string
+        bedrooms?: string
+        transactionType?: string
+        exactMatch?: boolean
+    }) => {
+        if (isUpdatingURL.current) return
+
+        isUpdatingURL.current = true
+        const params = new URLSearchParams(searchParams.toString())
+
+        if (updates.search !== undefined) {
+            if (updates.search) params.set('search', updates.search)
+            else params.delete('search')
+        }
+        if (updates.location !== undefined) {
+            if (updates.location) params.set('location', updates.location)
+            else params.delete('location')
+        }
+        if (updates.agent !== undefined) {
+            if (updates.agent) params.set('agent', updates.agent)
+            else params.delete('agent')
+        }
+        if (updates.property !== undefined) {
+            if (updates.property && updates.property !== 'all') params.set('property', updates.property)
+            else params.delete('property')
+        }
+        if (updates.bedrooms !== undefined) {
+            if (updates.bedrooms && updates.bedrooms !== 'all') params.set('bedrooms', updates.bedrooms)
+            else params.delete('bedrooms')
+        }
+        if (updates.transactionType !== undefined) {
+            if (updates.transactionType && updates.transactionType !== 'all') params.set('transactionType', updates.transactionType)
+            else params.delete('transactionType')
+        }
+        if (updates.exactMatch !== undefined) {
+            if (updates.exactMatch) params.set('exactMatch', 'true')
+            else params.delete('exactMatch')
+        }
+
+        const newURL = params.toString() ? `?${params.toString()}` : ''
+        router.replace(newURL, { scroll: false })
+        setTimeout(() => {
+            isUpdatingURL.current = false
+        }, 100)
+    }, [router, searchParams])
+
+    // Initialize filters from URL on mount (only once)
+    const hasInitialized = useRef(false)
+    useEffect(() => {
+        if (!hasInitialized.current) {
+            // Initialize filters from URL params without triggering URL updates
+            if (initialLocation) setLocation(initialLocation)
+            if (initialAgent) setAgent(initialAgent)
+            if (initialProperty) setProperty(initialProperty)
+            if (initialBedrooms) setBedroomCount(initialBedrooms)
+            if (initialTransactionType) setTransactionType(initialTransactionType)
+            if (initialExactMatch) setExactMatch(true)
+            hasInitialized.current = true
+        }
+    }, []) // Only run on mount - filters are already in URL, don't update again
 
     // Convert listings format
     const { convertListings } = useListingConverter()
@@ -90,16 +170,21 @@ export default function ListingsContent() {
         }
     }, [pagination.offset, offset, loadPage])
 
-    // Initial load
+    // Initial load - use URL param if exists, otherwise empty
     useEffect(() => {
-        search('')
+        if (initialSearch) {
+            search(initialSearch)
+        } else {
+            search('')
+        }
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Handle search
-    const handleSearch = async (query: string) => {
+    // Handle search - update URL param
+    const handleSearch = useCallback(async (query: string) => {
         pagination.goToPage(1) // Reset to first page
+        updateURLParams({ search: query })
         await search(query)
-    }
+    }, [pagination, search, updateURLParams])
 
     // Handle pagination navigation
     const handleNext = async () => {
@@ -110,41 +195,55 @@ export default function ListingsContent() {
         pagination.goToPrevious()
     }
 
-    // Handle filter changes (reset to first page when filters change)
-    const handleLocationFilter = (location: string) => {
+    // Handle filter changes (reset to first page when filters change and update URL)
+    const handleLocationFilter = useCallback((location: string) => {
         setLocation(location)
+        updateURLParams({ location })
         pagination.goToPage(1)
-    }
+    }, [setLocation, updateURLParams, pagination])
 
-    const handleAgentFilter = (agent: string) => {
+    const handleAgentFilter = useCallback((agent: string) => {
         setAgent(agent)
+        updateURLParams({ agent })
         pagination.goToPage(1)
-    }
+    }, [setAgent, updateURLParams, pagination])
 
-    const handlePropertyFilter = (property: string) => {
+    const handlePropertyFilter = useCallback((property: string) => {
         setProperty(property)
+        updateURLParams({ property })
         pagination.goToPage(1)
-    }
+    }, [setProperty, updateURLParams, pagination])
 
-    const handleBedroomCountFilter = (bedroomCount: string) => {
+    const handleBedroomCountFilter = useCallback((bedroomCount: string) => {
         setBedroomCount(bedroomCount)
+        updateURLParams({ bedrooms: bedroomCount })
         pagination.goToPage(1)
-    }
+    }, [setBedroomCount, updateURLParams, pagination])
 
-    const handleTransactionTypeFilter = (type: string) => {
+    const handleTransactionTypeFilter = useCallback((type: string) => {
         setTransactionType(type)
+        updateURLParams({ transactionType: type })
         pagination.goToPage(1)
-    }
+    }, [setTransactionType, updateURLParams, pagination])
 
-    const handleExactMatchToggle = (exact: boolean) => {
+    const handleExactMatchToggle = useCallback((exact: boolean) => {
         setExactMatch(exact)
+        updateURLParams({ exactMatch: exact })
         pagination.goToPage(1)
-    }
+    }, [setExactMatch, updateURLParams, pagination])
 
-    const handleResetFilters = () => {
+    const handleResetFilters = useCallback(() => {
         resetFilters()
+        updateURLParams({
+            location: '',
+            agent: '',
+            property: '',
+            bedrooms: '',
+            transactionType: '',
+            exactMatch: false
+        })
         pagination.goToPage(1)
-    }
+    }, [resetFilters, updateURLParams, pagination])
 
     const backgroundImage = BACKGROUND_IMAGES[0]
 
@@ -184,7 +283,11 @@ export default function ListingsContent() {
 
                 {/* Search Input */}
                 <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-4 mb-6">
-                    <SearchInput onSearch={handleSearch} isLoading={isLoading} />
+                    <SearchInput
+                        onSearch={handleSearch}
+                        isLoading={isLoading}
+                        initialValue={initialSearch}
+                    />
                 </Card>
 
                 {/* Error state */}

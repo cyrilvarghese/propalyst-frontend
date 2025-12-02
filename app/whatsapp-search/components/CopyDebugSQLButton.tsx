@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Bug } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 
@@ -17,6 +17,16 @@ interface CopyDebugSQLButtonProps {
 
 export default function CopyDebugSQLButton({ listing }: CopyDebugSQLButtonProps) {
     const [copied, setCopied] = useState(false)
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+        }
+    }, [])
 
     const copyDebugSQL = async () => {
         const sqlQuery = `SELECT
@@ -69,8 +79,17 @@ WHERE p.id = '${listing.id}'::uuid;`
 
         try {
             await navigator.clipboard.writeText(sqlQuery)
+
+            // Clear any existing timeout before setting a new one
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+
             setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
+            timeoutRef.current = setTimeout(() => {
+                setCopied(false)
+                timeoutRef.current = null
+            }, 2000)
         } catch (err) {
             console.error('Failed to copy SQL query:', err)
         }

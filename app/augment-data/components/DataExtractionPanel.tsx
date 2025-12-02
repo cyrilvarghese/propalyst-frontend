@@ -837,6 +837,16 @@ export default function DataExtractionPanel() {
  */
 function StreamMessageLine({ message }: { message: StreamMessage }) {
     const [copied, setCopied] = useState(false)
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+        }
+    }, [])
 
     const getMessageColor = () => {
         switch (message.type) {
@@ -861,8 +871,17 @@ function StreamMessageLine({ message }: { message: StreamMessage }) {
 
         try {
             await navigator.clipboard.writeText(sqlQuery)
+
+            // Clear any existing timeout before setting a new one
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+
             setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
+            timeoutRef.current = setTimeout(() => {
+                setCopied(false)
+                timeoutRef.current = null
+            }, 2000)
         } catch (err) {
             console.error('Failed to copy SQL query:', err)
         }
