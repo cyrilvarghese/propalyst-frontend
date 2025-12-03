@@ -151,9 +151,11 @@ export interface WhatsAppListingsSearchParams {
 export async function searchWhatsAppListingsByMessage(
     query: string = '',
     limit: number = 100,
-    offset: number = 0
+    offset: number = 0,
+    property_type?: string,
+    message_type?: string
 ): Promise<WhatsAppListingsResponse> {
-    console.log('🚀 searchWhatsAppListingsByMessage called with:', { query, limit, offset })
+    console.log('🚀 searchWhatsAppListingsByMessage called with:', { query, limit, offset, property_type, message_type })
 
     try {
         const queryParams = new URLSearchParams({
@@ -161,6 +163,14 @@ export async function searchWhatsAppListingsByMessage(
             limit: limit.toString(),
             offset: offset.toString(),
         })
+
+        // Add optional filters if provided
+        if (property_type && property_type.trim()) {
+            queryParams.append('property_type', property_type.trim())
+        }
+        if (message_type && message_type.trim()) {
+            queryParams.append('message_type', message_type.trim())
+        }
 
         const response = await fetch(`${API_BASE_URL}/api/whatsapp-listings/search/message?${queryParams.toString()}`, {
             method: 'GET',

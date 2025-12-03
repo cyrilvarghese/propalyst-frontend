@@ -34,12 +34,8 @@ interface CREAListingsTableProps {
     locationFilter?: string
     onAgentFilter?: (agent: string) => void
     agentFilter?: string
-    onPropertyFilter?: (property: string) => void
-    propertyFilter?: string
     onBedroomCountFilter?: (bedroomCount: string) => void
     bedroomCountFilter?: string
-    onTransactionTypeFilter?: (type: string) => void
-    transactionTypeFilter?: string
     exactMatch?: boolean
     onExactMatchToggle?: (exactMatch: boolean) => void
     onResetFilters?: () => void
@@ -61,12 +57,8 @@ export default function CREAListingsTable({
     locationFilter,
     onAgentFilter,
     agentFilter,
-    onPropertyFilter,
-    propertyFilter,
     onBedroomCountFilter,
     bedroomCountFilter,
-    onTransactionTypeFilter,
-    transactionTypeFilter,
     exactMatch,
     onExactMatchToggle,
     onResetFilters,
@@ -147,21 +139,15 @@ export default function CREAListingsTable({
                             locationFilter={locationFilter}
                             onAgentFilter={onAgentFilter}
                             agentFilter={agentFilter}
-                            onPropertyFilter={onPropertyFilter}
-                            propertyFilter={propertyFilter}
                             onBedroomCountFilter={onBedroomCountFilter}
                             bedroomCountFilter={bedroomCountFilter}
-                            onTransactionTypeFilter={onTransactionTypeFilter}
-                            transactionTypeFilter={transactionTypeFilter}
                             exactMatch={exactMatch}
                             onExactMatchToggle={onExactMatchToggle}
                             onResetFilters={onResetFilters}
                             hasActiveFilters={
                                 (locationFilter && locationFilter.trim().length > 0) ||
                                 (agentFilter && agentFilter.trim().length > 0) ||
-                                (propertyFilter && propertyFilter.trim().length > 0) ||
                                 (bedroomCountFilter && bedroomCountFilter.trim().length > 0) ||
-                                (transactionTypeFilter && transactionTypeFilter.trim().length > 0) ||
                                 exactMatch
                             }
                         />

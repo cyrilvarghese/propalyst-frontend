@@ -97,12 +97,7 @@ export function useListingsFilters(): UseListingsFiltersReturn {
             })
         }
 
-        // Filter by property type
-        if (filters.property.trim()) {
-            filtered = filtered.filter(listing => {
-                return listing.property_type === filters.property
-            })
-        }
+        // Note: property_type and message_type are now server-side filters, handled by API
 
         // Filter by bedroom count
         if (filters.bedroomCount.trim()) {
@@ -117,13 +112,6 @@ export function useListingsFilters(): UseListingsFiltersReturn {
             })
         }
 
-        // Filter by transaction type
-        if (filters.transactionType.trim()) {
-            filtered = filtered.filter(listing => {
-                return listing.message_type === filters.transactionType
-            })
-        }
-
         return filtered
     }, [filters])
 
@@ -131,9 +119,7 @@ export function useListingsFilters(): UseListingsFiltersReturn {
         return (
             filters.location.trim().length > 0 ||
             filters.agent.trim().length > 0 ||
-            filters.property.trim().length > 0 ||
             filters.bedroomCount.trim().length > 0 ||
-            filters.transactionType.trim().length > 0 ||
             filters.exactMatch
         )
     }, [filters])

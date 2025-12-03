@@ -11,6 +11,8 @@ import { searchWhatsAppListingsByMessage, WhatsAppListing, WhatsAppListingsRespo
 interface UseWhatsAppListingsOptions {
     pageSize?: number
     initialQuery?: string
+    initialPropertyType?: string
+    initialMessageType?: string
 }
 
 interface UseWhatsAppListingsReturn {
@@ -19,7 +21,7 @@ interface UseWhatsAppListingsReturn {
     isLoading: boolean
     error: string | null
     offset: number
-    search: (query: string) => Promise<void>
+    search: (query: string, propertyType?: string, messageType?: string) => Promise<void>
     loadPage: (newOffset: number) => Promise<void>
     reset: () => void
 }
@@ -27,13 +29,15 @@ interface UseWhatsAppListingsReturn {
 export function useWhatsAppListings(
     options: UseWhatsAppListingsOptions = {}
 ): UseWhatsAppListingsReturn {
-    const { pageSize = 200, initialQuery = '' } = options
+    const { pageSize = 200, initialQuery = '', initialPropertyType = '', initialMessageType = '' } = options
     const [listings, setListings] = useState<WhatsAppListing[]>([])
     const [totalCount, setTotalCount] = useState(0)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [offset, setOffset] = useState(0)
     const [currentQuery, setCurrentQuery] = useState(initialQuery)
+    const [currentPropertyType, setCurrentPropertyType] = useState(initialPropertyType)
+    const [currentMessageType, setCurrentMessageType] = useState(initialMessageType)
 
     const abortControllerRef = useRef<AbortController | null>(null)
 
@@ -49,10 +53,10 @@ export function useWhatsAppListings(
     /**
      * Core fetcher for WhatsApp listings.
      * - Cancels any in-flight request
-     * - Calls the `/search/message` API with query, pageSize and offset
-     * - Updates listings, totalCount, offset and currentQuery
+     * - Calls the `/search/message` API with query, pageSize, offset, property_type and message_type
+     * - Updates listings, totalCount, offset, currentQuery, currentPropertyType and currentMessageType
      */
-    const fetchListings = useCallback(async (query: string, newOffset: number) => {
+    const fetchListings = useCallback(async (query: string, newOffset: number, propertyType?: string, messageType?: string) => {
         // Abort previous request if any
         if (abortControllerRef.current) {
             abortControllerRef.current.abort()
@@ -68,7 +72,9 @@ export function useWhatsAppListings(
             const response = await searchWhatsAppListingsByMessage(
                 query,
                 pageSize,
-                newOffset
+                newOffset,
+                propertyType,
+                messageType
             )
 
             if (!abortController.signal.aborted) {
@@ -76,6 +82,8 @@ export function useWhatsAppListings(
                 setTotalCount(response.count)
                 setOffset(newOffset)
                 setCurrentQuery(query)
+                if (propertyType !== undefined) setCurrentPropertyType(propertyType || '')
+                if (messageType !== undefined) setCurrentMessageType(messageType || '')
             }
         } catch (err: any) {
             if (!abortController.signal.aborted && err.name !== 'AbortError') {
@@ -95,21 +103,21 @@ export function useWhatsAppListings(
     /**
      * Run a new search starting from the first page (offset = 0).
      */
-    const search = useCallback(async (query: string) => {
-        await fetchListings(query, 0)
+    const search = useCallback(async (query: string, propertyType?: string, messageType?: string) => {
+        await fetchListings(query, 0, propertyType, messageType)
     }, [fetchListings])
 
     /**
-     * Load a specific page by offset while keeping the current search query.
+     * Load a specific page by offset while keeping the current search query and filters.
      */
     const loadPage = useCallback(async (newOffset: number) => {
-        await fetchListings(currentQuery, newOffset)
-    }, [fetchListings, currentQuery])
+        await fetchListings(currentQuery, newOffset, currentPropertyType || undefined, currentMessageType || undefined)
+    }, [fetchListings, currentQuery, currentPropertyType, currentMessageType])
 
     /**
      * Reset all listing state:
      * - Clears results and errors
-     * - Resets offset and query
+     * - Resets offset, query, property_type and message_type
      * - Aborts any in-flight request
      */
     const reset = useCallback(() => {
@@ -117,6 +125,8 @@ export function useWhatsAppListings(
         setTotalCount(0)
         setOffset(0)
         setCurrentQuery('')
+        setCurrentPropertyType('')
+        setCurrentMessageType('')
         setError(null)
         if (abortControllerRef.current) {
             abortControllerRef.current.abort()

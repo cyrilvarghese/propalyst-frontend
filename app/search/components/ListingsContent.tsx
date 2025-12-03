@@ -45,9 +45,9 @@ export default function ListingsContent() {
     const initialSearch = searchParams.get('query') || ''
     const initialLocation = searchParams.get('location') || ''
     const initialAgent = searchParams.get('agent') || ''
-    const initialProperty = searchParams.get('property') || ''
+    const initialPropertyType = searchParams.get('property_type') || '' // Server-side filter
+    const initialMessageType = searchParams.get('message_type') || '' // Server-side filter
     const initialBedrooms = searchParams.get('bedrooms') || ''
-    const initialTransactionType = searchParams.get('transactionType') || ''
     const initialExactMatch = searchParams.get('exactMatch') === 'true'
     const leadId = searchParams.get('lead_id') || ''
 
@@ -61,7 +61,12 @@ export default function ListingsContent() {
         search,
         loadPage,
         reset: resetListings
-    } = useWhatsAppListings({ pageSize: PAGE_SIZE, initialQuery: initialSearch })
+    } = useWhatsAppListings({ 
+        pageSize: PAGE_SIZE, 
+        initialQuery: initialSearch,
+        initialPropertyType: initialPropertyType,
+        initialMessageType: initialMessageType
+    })
 
     // Filtering logic - initialize from URL
     const {
@@ -82,9 +87,9 @@ export default function ListingsContent() {
         query?: string
         location?: string
         agent?: string
-        property?: string
+        property_type?: string
+        message_type?: string
         bedrooms?: string
-        transactionType?: string
         exactMatch?: boolean
         lead_id?: string
     }) => {
@@ -105,17 +110,17 @@ export default function ListingsContent() {
             if (updates.agent) params.set('agent', updates.agent)
             else params.delete('agent')
         }
-        if (updates.property !== undefined) {
-            if (updates.property && updates.property !== 'all') params.set('property', updates.property)
-            else params.delete('property')
+        if (updates.property_type !== undefined) {
+            if (updates.property_type && updates.property_type !== 'all') params.set('property_type', updates.property_type)
+            else params.delete('property_type')
+        }
+        if (updates.message_type !== undefined) {
+            if (updates.message_type && updates.message_type !== 'all') params.set('message_type', updates.message_type)
+            else params.delete('message_type')
         }
         if (updates.bedrooms !== undefined) {
             if (updates.bedrooms && updates.bedrooms !== 'all') params.set('bedrooms', updates.bedrooms)
             else params.delete('bedrooms')
-        }
-        if (updates.transactionType !== undefined) {
-            if (updates.transactionType && updates.transactionType !== 'all') params.set('transactionType', updates.transactionType)
-            else params.delete('transactionType')
         }
         if (updates.exactMatch !== undefined) {
             if (updates.exactMatch) params.set('exactMatch', 'true')
@@ -137,12 +142,10 @@ export default function ListingsContent() {
     const hasInitialized = useRef(false)
     useEffect(() => {
         if (!hasInitialized.current) {
-            // Initialize filters from URL params without triggering URL updates
+            // Initialize client-side filters from URL params (property_type and message_type are server-side, handled separately)
             if (initialLocation) setLocation(initialLocation)
             if (initialAgent) setAgent(initialAgent)
-            if (initialProperty) setProperty(initialProperty)
             if (initialBedrooms) setBedroomCount(initialBedrooms)
-            if (initialTransactionType) setTransactionType(initialTransactionType)
             if (initialExactMatch) setExactMatch(true)
             hasInitialized.current = true
         }
@@ -176,20 +179,28 @@ export default function ListingsContent() {
         }
     }, [pagination.offset, offset, loadPage])
 
-    // Initial load - use URL param if exists, otherwise empty
+    // Initial load - use URL params if exist, otherwise empty
     useEffect(() => {
-        if (initialSearch) {
-            search(initialSearch)
+        if (initialSearch || initialPropertyType || initialMessageType) {
+            search(
+                initialSearch,
+                initialPropertyType || undefined,
+                initialMessageType || undefined
+            )
         } else {
-            search('')
+            search('', undefined, undefined)
         }
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Handle search - update URL param
-    const handleSearch = useCallback(async (query: string) => {
+    // Handle search - update URL params and trigger API call
+    const handleSearch = useCallback(async (query: string, propertyType?: string, messageType?: string) => {
         pagination.goToPage(1) // Reset to first page
-        updateURLParams({ query: query })
-        await search(query)
+        updateURLParams({ 
+            query: query,
+            property_type: propertyType,
+            message_type: messageType
+        })
+        await search(query, propertyType, messageType)
     }, [pagination, search, updateURLParams])
 
     // Handle pagination navigation
@@ -214,23 +225,11 @@ export default function ListingsContent() {
         pagination.goToPage(1)
     }, [setAgent, updateURLParams, pagination])
 
-    const handlePropertyFilter = useCallback((property: string) => {
-        setProperty(property)
-        updateURLParams({ property })
-        pagination.goToPage(1)
-    }, [setProperty, updateURLParams, pagination])
-
     const handleBedroomCountFilter = useCallback((bedroomCount: string) => {
         setBedroomCount(bedroomCount)
         updateURLParams({ bedrooms: bedroomCount })
         pagination.goToPage(1)
     }, [setBedroomCount, updateURLParams, pagination])
-
-    const handleTransactionTypeFilter = useCallback((type: string) => {
-        setTransactionType(type)
-        updateURLParams({ transactionType: type })
-        pagination.goToPage(1)
-    }, [setTransactionType, updateURLParams, pagination])
 
     const handleExactMatchToggle = useCallback((exact: boolean) => {
         setExactMatch(exact)
@@ -243,13 +242,15 @@ export default function ListingsContent() {
         updateURLParams({
             location: '',
             agent: '',
-            property: '',
             bedrooms: '',
-            transactionType: '',
-            exactMatch: false
+            exactMatch: false,
+            property_type: '',
+            message_type: ''
         })
         pagination.goToPage(1)
-    }, [resetFilters, updateURLParams, pagination])
+        // Also reset server-side filters by triggering a new search
+        search('', undefined, undefined)
+    }, [resetFilters, updateURLParams, pagination, search])
 
     const backgroundImage = BACKGROUND_IMAGES[0]
 
@@ -299,6 +300,8 @@ export default function ListingsContent() {
                         onSearch={handleSearch}
                         isLoading={isLoading}
                         initialValue={initialSearch}
+                        initialPropertyType={initialPropertyType}
+                        initialMessageType={initialMessageType}
                     />
                 </Card>
 
@@ -341,12 +344,8 @@ export default function ListingsContent() {
                         locationFilter={filters.location}
                         onAgentFilter={handleAgentFilter}
                         agentFilter={filters.agent}
-                        onPropertyFilter={handlePropertyFilter}
-                        propertyFilter={filters.property}
                         onBedroomCountFilter={handleBedroomCountFilter}
                         bedroomCountFilter={filters.bedroomCount}
-                        onTransactionTypeFilter={handleTransactionTypeFilter}
-                        transactionTypeFilter={filters.transactionType}
                         exactMatch={filters.exactMatch}
                         onExactMatchToggle={handleExactMatchToggle}
                         onResetFilters={handleResetFilters}

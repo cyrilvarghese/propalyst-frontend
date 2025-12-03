@@ -26,12 +26,8 @@ interface TableHeaderWithFiltersProps {
     locationFilter?: string
     onAgentFilter?: (agent: string) => void
     agentFilter?: string
-    onPropertyFilter?: (property: string) => void
-    propertyFilter?: string
     onBedroomCountFilter?: (bedroomCount: string) => void
     bedroomCountFilter?: string
-    onTransactionTypeFilter?: (type: string) => void
-    transactionTypeFilter?: string
     exactMatch?: boolean
     onExactMatchToggle?: (exactMatch: boolean) => void
     onResetFilters?: () => void
@@ -43,12 +39,8 @@ export default function TableHeaderWithFilters({
     locationFilter,
     onAgentFilter,
     agentFilter,
-    onPropertyFilter,
-    propertyFilter,
     onBedroomCountFilter,
     bedroomCountFilter,
-    onTransactionTypeFilter,
-    transactionTypeFilter,
     exactMatch = false,
     onExactMatchToggle,
     onResetFilters,
@@ -87,33 +79,7 @@ export default function TableHeaderWithFilters({
                     )}
                 </TableHead>
                 <TableHead className="h-12 p-2">
-                    {onPropertyFilter && (
-                        <Select
-                            value={propertyFilter || 'all'}
-                            onValueChange={(value) => onPropertyFilter(value === 'all' ? '' : value)}
-                        >
-                            <SelectTrigger
-                                className={`h-8 text-xs ${propertyFilter && propertyFilter.trim().length > 0
-                                    ? 'border-accent focus:ring-accent focus:ring-2 bg-accent/5'
-                                    : ''
-                                    }`}
-                            >
-                                <SelectValue placeholder="All asset types" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All asset types</SelectItem>
-                                <SelectItem value="apartment">Apartment</SelectItem>
-                                <SelectItem value="villa">Villa</SelectItem>
-                                <SelectItem value="independent_house">Independent House</SelectItem>
-                                <SelectItem value="plot">Plot</SelectItem>
-                                <SelectItem value="office">Office</SelectItem>
-                                <SelectItem value="retail">Retail</SelectItem>
-                                <SelectItem value="warehouse">Warehouse</SelectItem>
-                                <SelectItem value="pg_hostel">PG/Hostel</SelectItem>
-                                <SelectItem value="farmhouse">Farmhouse</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )}
+                    {/* Property type filter moved to SearchInput - server-side */}
                 </TableHead>
                 <TableHead className="h-12 p-2">
                     {onBedroomCountFilter && (
@@ -157,28 +123,7 @@ export default function TableHeaderWithFilters({
                 </TableHead>
                 <TableHead className="h-12 p-0"></TableHead>
                 <TableHead className="h-12 p-2">
-                    {onTransactionTypeFilter && (
-                        <Select
-                            value={transactionTypeFilter || 'all'}
-                            onValueChange={(value) => onTransactionTypeFilter(value === 'all' ? '' : value)}
-                        >
-                            <SelectTrigger
-                                className={`h-8 text-xs ${transactionTypeFilter && transactionTypeFilter.trim().length > 0
-                                    ? 'border-accent focus:ring-accent focus:ring-2 bg-accent/5'
-                                    : ''
-                                    }`}
-                            >
-                                <SelectValue placeholder="All types" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All types</SelectItem>
-                                <SelectItem value="supply_sale">Supply - Sale</SelectItem>
-                                <SelectItem value="supply_rent">Supply - Rent</SelectItem>
-                                <SelectItem value="demand_buy">Demand - Buy</SelectItem>
-                                <SelectItem value="demand_rent">Demand - Rent</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )}
+                    {/* Message type filter moved to SearchInput - server-side */}
                 </TableHead>
                 <TableHead className="h-12 p-0"></TableHead>
             </TableRow>
