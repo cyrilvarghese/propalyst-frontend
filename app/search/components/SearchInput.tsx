@@ -145,7 +145,7 @@ export default function SearchInput({
                             <SelectItem value="villa">Villa</SelectItem>
                             <SelectItem value="independent_house">Independent House</SelectItem>
                             <SelectItem value="plot">Plot</SelectItem>
-                            <SelectItem value="office">Office</SelectItem>
+                            <SelectItem value="office">Office</SelectItem>image.png
                             <SelectItem value="retail">Retail</SelectItem>
                             <SelectItem value="warehouse">Warehouse</SelectItem>
                             <SelectItem value="pg_hostel">PG/Hostel</SelectItem>

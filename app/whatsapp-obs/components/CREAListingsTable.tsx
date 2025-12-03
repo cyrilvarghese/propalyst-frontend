@@ -27,6 +27,7 @@ import CopyDebugSQLButton from './CopyDebugSQLButton'
 import CompareListingButton from './CompareListingButton'
 import RetryListingButton from './RetryListingButton'
 import CopyLinkButton from './CopyLinkButton'
+import AddMatchingSupplyButton from './AddMatchingSupplyButton'
 
 interface CREAListingsTableProps {
     listings: CREAListing[]
@@ -317,6 +318,7 @@ export default function CREAListingsTable({
                                                         </div>
                                                         <div className="flex gap-2 flex-wrap">
                                                             <RetryListingButton listing={listing} />
+                                                            <AddMatchingSupplyButton listing={listing} />
                                                             <CopyDebugSQLButton listing={listing} />
                                                             <CompareListingButton listing={listing} />
                                                         </div>
