@@ -249,10 +249,6 @@ export default function ListingsContent() {
                         locationFilter={locationFilter}
                         onAgentFilter={handleAgentFilter}
                         agentFilter={agentFilter}
-                        onPropertyFilter={handlePropertyFilter}
-                        propertyFilter={propertyFilter}
-                        onTransactionTypeFilter={handleTransactionTypeFilter}
-                        transactionTypeFilter={transactionTypeFilter}
                         exactMatch={exactMatch}
                         onExactMatchToggle={handleExactMatchToggle}
                         onResetFilters={handleResetFilters}
