@@ -9,7 +9,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Link2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Link2, Loader2, CheckCircle2, XCircle, CirclePlusIcon } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -38,7 +38,7 @@ export default function AddMatchingSupplyButton({ listing }: AddMatchingSupplyBu
         if (!leadId) {
             setStatus('error')
             setErrorMessage('Lead ID not found in URL')
-            
+
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current)
             }
@@ -71,12 +71,12 @@ export default function AddMatchingSupplyButton({ listing }: AddMatchingSupplyBu
             }
 
             setStatus('success')
-            
+
             // Clear any existing timeout before setting a new one
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current)
             }
-            
+
             timeoutRef.current = setTimeout(() => {
                 setStatus('idle')
                 timeoutRef.current = null
@@ -85,12 +85,12 @@ export default function AddMatchingSupplyButton({ listing }: AddMatchingSupplyBu
             console.error('Error adding matching supply:', err)
             setStatus('error')
             setErrorMessage(err.message || 'Failed to add matching supply')
-            
+
             // Clear any existing timeout before setting a new one
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current)
             }
-            
+
             timeoutRef.current = setTimeout(() => {
                 setStatus('idle')
                 setErrorMessage('')
@@ -107,7 +107,7 @@ export default function AddMatchingSupplyButton({ listing }: AddMatchingSupplyBu
         <button
             onClick={handleAddMatchingSupply}
             disabled={status === 'loading'}
-            className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline border border-blue-300 rounded px-2 py-1 bg-blue-50 hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 text-xs bg-accent text-white hover:text-accent-foreground hover:underline border border-accent rounded px-2 py-1 hover:bg-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
             {status === 'loading' ? (
                 <>
@@ -126,8 +126,8 @@ export default function AddMatchingSupplyButton({ listing }: AddMatchingSupplyBu
                 </>
             ) : (
                 <>
-                    <Link2 className="h-3 w-3" />
-                    Add to Lead
+                    <CirclePlusIcon className="h-3 w-3" />
+                    Add To Matching Supply
                 </>
             )}
         </button>

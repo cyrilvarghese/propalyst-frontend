@@ -271,7 +271,8 @@ export default function CREAListingsTable({
                                             <TableRow>
                                                 <TableCell colSpan={8} className="bg-gray-50">
                                                     <div className="space-y-2 py-2">
-                                                        <div className="flex justify-start mb-2">
+                                                        <div className="flex justify-start mb-2 gap-2">
+                                                            <AddMatchingSupplyButton listing={listing} />
                                                             <CopyLinkButton listing={listing} />
                                                         </div>
                                                         {(listing.status || listing.facing || listing.floor || listing.parking || listing.furnishing) && (
@@ -317,8 +318,8 @@ export default function CREAListingsTable({
                                                             {listing.raw_message}
                                                         </div>
                                                         <div className="flex gap-2 flex-wrap">
+
                                                             <RetryListingButton listing={listing} />
-                                                            <AddMatchingSupplyButton listing={listing} />
                                                             <CopyDebugSQLButton listing={listing} />
                                                             <CompareListingButton listing={listing} />
                                                         </div>
