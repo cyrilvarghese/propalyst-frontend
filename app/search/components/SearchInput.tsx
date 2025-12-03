@@ -71,6 +71,30 @@ export default function SearchInput({
         }
     }
 
+    const handlePropertyTypeChange = (value: string) => {
+        setPropertyType(value)
+        // Trigger search immediately when dropdown changes
+        const searchPropertyType = value === 'all' ? undefined : value
+        const searchMessageType = messageType === 'all' ? undefined : messageType
+        if (query.trim().length > 0 || searchPropertyType || searchMessageType) {
+            onSearch(query.trim(), searchPropertyType, searchMessageType)
+        } else {
+            onSearch('', undefined, undefined)
+        }
+    }
+
+    const handleMessageTypeChange = (value: string) => {
+        setMessageType(value)
+        // Trigger search immediately when dropdown changes
+        const searchPropertyType = propertyType === 'all' ? undefined : propertyType
+        const searchMessageType = value === 'all' ? undefined : value
+        if (query.trim().length > 0 || searchPropertyType || searchMessageType) {
+            onSearch(query.trim(), searchPropertyType, searchMessageType)
+        } else {
+            onSearch('', undefined, undefined)
+        }
+    }
+
     return (
         <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -85,47 +109,6 @@ export default function SearchInput({
                         className="pl-10 h-10 text-sm"
                         disabled={isLoading}
                     />
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                        <Select
-                            value={propertyType}
-                            onValueChange={setPropertyType}
-                        >
-                            <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="All property types" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Property Types</SelectItem>
-                                <SelectItem value="apartment">Apartment</SelectItem>
-                                <SelectItem value="villa">Villa</SelectItem>
-                                <SelectItem value="independent_house">Independent House</SelectItem>
-                                <SelectItem value="plot">Plot</SelectItem>
-                                <SelectItem value="office">Office</SelectItem>
-                                <SelectItem value="retail">Retail</SelectItem>
-                                <SelectItem value="warehouse">Warehouse</SelectItem>
-                                <SelectItem value="pg_hostel">PG/Hostel</SelectItem>
-                                <SelectItem value="farmhouse">Farmhouse</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="flex-1">
-                        <Select
-                            value={messageType}
-                            onValueChange={setMessageType}
-                        >
-                            <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="All message types" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Message Types</SelectItem>
-                                <SelectItem value="supply_sale">Supply - Sale</SelectItem>
-                                <SelectItem value="supply_rent">Supply - Rent</SelectItem>
-                                <SelectItem value="demand_buy">Demand - Buy</SelectItem>
-                                <SelectItem value="demand_rent">Demand - Rent</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
                 </div>
                 <Button
                     onClick={handleSearch}
@@ -147,8 +130,49 @@ export default function SearchInput({
             </div>
 
             {/* Filter Row */}
-
+            <div className="flex items-center gap-3">
+                <div className="flex-1">
+                    <Select
+                        value={propertyType}
+                        onValueChange={handlePropertyTypeChange}
+                    >
+                        <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="All property types" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Property Types</SelectItem>
+                            <SelectItem value="apartment">Apartment</SelectItem>
+                            <SelectItem value="villa">Villa</SelectItem>
+                            <SelectItem value="independent_house">Independent House</SelectItem>
+                            <SelectItem value="plot">Plot</SelectItem>
+                            <SelectItem value="office">Office</SelectItem>
+                            <SelectItem value="retail">Retail</SelectItem>
+                            <SelectItem value="warehouse">Warehouse</SelectItem>
+                            <SelectItem value="pg_hostel">PG/Hostel</SelectItem>
+                            <SelectItem value="farmhouse">Farmhouse</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex-1">
+                    <Select
+                        value={messageType}
+                        onValueChange={handleMessageTypeChange}
+                    >
+                        <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="All message types" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Message Types</SelectItem>
+                            <SelectItem value="supply_sale">Supply - Sale</SelectItem>
+                            <SelectItem value="supply_rent">Supply - Rent</SelectItem>
+                            <SelectItem value="demand_buy">Demand - Buy</SelectItem>
+                            <SelectItem value="demand_rent">Demand - Rent</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
         </div>
     )
 }
+
 
