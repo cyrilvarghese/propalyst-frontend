@@ -86,6 +86,47 @@ export default function SearchInput({
                         disabled={isLoading}
                     />
                 </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                        <Select
+                            value={propertyType}
+                            onValueChange={setPropertyType}
+                        >
+                            <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="All property types" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Property Types</SelectItem>
+                                <SelectItem value="apartment">Apartment</SelectItem>
+                                <SelectItem value="villa">Villa</SelectItem>
+                                <SelectItem value="independent_house">Independent House</SelectItem>
+                                <SelectItem value="plot">Plot</SelectItem>
+                                <SelectItem value="office">Office</SelectItem>
+                                <SelectItem value="retail">Retail</SelectItem>
+                                <SelectItem value="warehouse">Warehouse</SelectItem>
+                                <SelectItem value="pg_hostel">PG/Hostel</SelectItem>
+                                <SelectItem value="farmhouse">Farmhouse</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex-1">
+                        <Select
+                            value={messageType}
+                            onValueChange={setMessageType}
+                        >
+                            <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="All message types" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Message Types</SelectItem>
+                                <SelectItem value="supply_sale">Supply - Sale</SelectItem>
+                                <SelectItem value="supply_rent">Supply - Rent</SelectItem>
+                                <SelectItem value="demand_buy">Demand - Buy</SelectItem>
+                                <SelectItem value="demand_rent">Demand - Rent</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
                 <Button
                     onClick={handleSearch}
                     disabled={isLoading}
@@ -106,47 +147,7 @@ export default function SearchInput({
             </div>
 
             {/* Filter Row */}
-            <div className="flex items-center gap-3">
-                <div className="flex-1">
-                    <Select
-                        value={propertyType}
-                        onValueChange={setPropertyType}
-                    >
-                        <SelectTrigger className="h-9 text-sm">
-                            <SelectValue placeholder="All property types" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Property Types</SelectItem>
-                            <SelectItem value="apartment">Apartment</SelectItem>
-                            <SelectItem value="villa">Villa</SelectItem>
-                            <SelectItem value="independent_house">Independent House</SelectItem>
-                            <SelectItem value="plot">Plot</SelectItem>
-                            <SelectItem value="office">Office</SelectItem>
-                            <SelectItem value="retail">Retail</SelectItem>
-                            <SelectItem value="warehouse">Warehouse</SelectItem>
-                            <SelectItem value="pg_hostel">PG/Hostel</SelectItem>
-                            <SelectItem value="farmhouse">Farmhouse</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="flex-1">
-                    <Select
-                        value={messageType}
-                        onValueChange={setMessageType}
-                    >
-                        <SelectTrigger className="h-9 text-sm">
-                            <SelectValue placeholder="All message types" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Message Types</SelectItem>
-                            <SelectItem value="supply_sale">Supply - Sale</SelectItem>
-                            <SelectItem value="supply_rent">Supply - Rent</SelectItem>
-                            <SelectItem value="demand_buy">Demand - Buy</SelectItem>
-                            <SelectItem value="demand_rent">Demand - Rent</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
+
         </div>
     )
 }
