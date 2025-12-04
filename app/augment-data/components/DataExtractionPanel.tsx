@@ -24,6 +24,13 @@ import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
 import { Play, Square, Loader2, RefreshCw, Upload, CheckCircle2, AlertCircle } from 'lucide-react'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -93,6 +100,7 @@ export default function DataExtractionPanel() {
     const [fileError, setFileError] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null)
+    const [dateFormat, setDateFormat] = useState<'DD/MM/YY' | 'MM/DD/YY'>('DD/MM/YY')
 
     // Stage 2: Processing state
     const [isProcessing, setIsProcessing] = useState(false)
@@ -183,9 +191,10 @@ export default function DataExtractionPanel() {
         setUploadResponse(null)
 
         try {
-            // Prepare FormData with file
+            // Prepare FormData with file and date format preference
             const formData = new FormData()
             formData.append('file', selectedFile)
+            formData.append('date_format_preference', dateFormat)
 
             // Make POST request with file upload
             const response = await fetch(UPLOAD_FILE_ENDPOINT, {
@@ -212,7 +221,7 @@ export default function DataExtractionPanel() {
         } finally {
             setIsUploading(false)
         }
-    }, [selectedFile, fetchRawStats])
+    }, [selectedFile, dateFormat, fetchRawStats])
 
     // STAGE 2: Process Messages with LLM
     const handleProcessMessages = useCallback(async () => {
@@ -554,9 +563,32 @@ export default function DataExtractionPanel() {
                 <CardContent>
                     {/* File Upload Input */}
                     <div className="mb-4 space-y-2">
-                        <Label htmlFor="fileUpload" className="text-white">
-                            WhatsApp Export File (.txt)
-                        </Label>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="fileUpload" className="text-white">
+                                WhatsApp Export File (.txt)
+                            </Label>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="dateFormat" className="text-sm text-gray-400">
+                                    Date Format:
+                                </Label>
+                                <Select
+                                    value={dateFormat}
+                                    onValueChange={(value: 'DD/MM/YY' | 'MM/DD/YY') => setDateFormat(value)}
+                                    disabled={isUploading || isProcessing}
+                                >
+                                    <SelectTrigger
+                                        id="dateFormat"
+                                        className="w-[140px] bg-[#1a1a1a] border-gray-600 text-white h-8 text-sm"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="DD/MM/YY">DD/MM/YY</SelectItem>
+                                        <SelectItem value="MM/DD/YY">MM/DD/YY</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                         <div className="flex items-center gap-3">
                             <div className="relative flex-1">
                                 <Input
