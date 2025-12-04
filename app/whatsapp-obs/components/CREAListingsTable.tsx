@@ -204,14 +204,14 @@ export default function CREAListingsTable({
                             ) : (
                                 paginatedListings.map((listing) => (
                                     <>
-                                        <TableRow key={listing.id} className="hover:bg-gray-50">
-                                            <TableCell className="align-top pt-3">
+                                        <TableRow key={listing.id} className="hover:bg-gray-300">
+                                            <TableCell className="align-top py-2">
                                                 <p className="text-sm text-gray-900 font-medium">
                                                     {formatDate(listing.message_date)}
                                                 </p>
                                             </TableCell>
-                                            <TableCell className="align-top pt-3">
-                                                <div className="space-y-1">
+                                            <TableCell className="align-top py-2">
+                                                <div className="space-y-0.5">
                                                     <div className="text-sm text-gray-900 font-medium">
                                                         {listing.agent_name || 'N/A'}
                                                     </div>
@@ -234,17 +234,17 @@ export default function CREAListingsTable({
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="align-top pt-3">
+                                            <TableCell className="align-top py-2">
                                                 <div className="text-sm text-gray-900 font-medium">
                                                     {formatAssetType(listing.property_type || 'Property')}
                                                 </div>
                                                 {listing.size_sqft && (
-                                                    <div className="text-xs text-gray-600 mt-1">
+                                                    <div className="text-xs text-gray-600 mt-0.5">
                                                         {listing.size_sqft.toLocaleString('en-IN')} sq.ft
                                                     </div>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="align-top pt-3">
+                                            <TableCell className="align-top py-2">
                                                 {listing.configuration ? (
                                                     (() => {
                                                         const badgeColors = getBedroomBadgeColor(listing.configuration)
@@ -261,27 +261,27 @@ export default function CREAListingsTable({
                                                     <span className="text-xs text-gray-400">N/A</span>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="align-top pt-3">
+                                            <TableCell className="align-top py-2">
                                                 <div className="text-sm text-gray-900 font-medium">
                                                     {listing.location || 'No location'}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="align-top pt-3">
+                                            <TableCell className="align-top py-1.5">
                                                 <div className="text-sm text-gray-900 font-medium">
                                                     {formatPrice(listing.price)}
                                                 </div>
                                                 {listing.price_text && (
-                                                    <div className="text-xs text-gray-600 mt-1">
+                                                    <div className="text-xs text-gray-600 mt-0.5">
                                                         {listing.price_text}
                                                     </div>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="align-top pt-3">
+                                            <TableCell className="align-top py-2">
                                                 <p className={`w-[100px] text-xs rounded-md p-1 ${getMessageTypeVariant(listing.transaction_type)}`}>
                                                     {formatMessageType(listing.transaction_type)}
                                                 </p>
                                             </TableCell>
-                                            <TableCell className="align-top pt-3">
+                                            <TableCell className="align-top py-2">
                                                 {listing.raw_message && (
                                                     <Button
                                                         variant="ghost"
@@ -300,8 +300,8 @@ export default function CREAListingsTable({
                                         </TableRow>
                                         {expandedRow === listing.id && listing.raw_message && (
                                             <TableRow>
-                                                <TableCell colSpan={8} className="bg-gray-50">
-                                                    <div className="space-y-2 py-2">
+                                                <TableCell colSpan={8} className="bg-gray-50 py-2">
+                                                    <div className="space-y-1.5">
                                                         <div className="flex justify-start mb-2 gap-2">
                                                             <AddMatchingSupplyButton listing={listing} />
                                                             <CopyLinkButton listing={listing} />

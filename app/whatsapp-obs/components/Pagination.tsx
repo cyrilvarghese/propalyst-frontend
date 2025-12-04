@@ -34,14 +34,14 @@ export default function Pagination({
     sticky = true
 }: PaginationProps) {
     const containerClassName = sticky
-        ? 'sticky bottom-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-lg rounded-t-lg p-4 z-50'
-        : 'bg-white border-t border-gray-200 shadow-sm rounded-t-lg p-4'
+        ? 'sticky bottom-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-lg rounded-t-lg px-4 py-1.5 z-50'
+        : 'bg-white border-t border-gray-200 shadow-sm rounded-t-lg px-4 py-1.5'
 
     return (
         <div className={containerClassName}>
             <div className="flex items-center justify-between">
                 {/* Item count display */}
-                <div className="text-sm text-gray-600">
+                <div className="text-xs text-gray-600">
                     Showing {startIndex + 1} to {endIndex} {itemName}
                     {totalCount > 0 && endIndex <= totalCount && endIndex < totalCount && (
                         <> of {totalCount}</>
@@ -49,16 +49,17 @@ export default function Pagination({
                 </div>
 
                 {/* Pagination controls */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     {/* Previous button */}
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={onPrevious}
-
+                        disabled={!hasPrevious}
+                        className="h-7 px-2 text-xs"
                         aria-label="Go to previous page"
                     >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        <ChevronLeft className="h-3 w-3 mr-0.5" />
                         Previous
                     </Button>
 
@@ -67,11 +68,12 @@ export default function Pagination({
                         variant="outline"
                         size="sm"
                         onClick={onNext}
-
+                        disabled={!hasNext}
+                        className="h-7 px-2 text-xs"
                         aria-label="Go to next page"
                     >
                         Next
-                        <ChevronRight className="h-4 w-4 ml-1" />
+                        <ChevronRight className="h-3 w-3 ml-0.5" />
                     </Button>
                 </div>
             </div>

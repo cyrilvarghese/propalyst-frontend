@@ -254,7 +254,7 @@ export default function ListingsContent() {
 
     return (
         <div
-            className="min-h-screen bg-[#1a1a1a] py-8 relative"
+            className="min-h-screen bg-[#1a1a1a] py-4 relative"
             style={{
                 backgroundImage: `url('${backgroundImage}')`,
                 backgroundSize: "cover",
@@ -265,7 +265,7 @@ export default function ListingsContent() {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black/80 z-0" />
 
-            <div className="max-w-7xl mx-auto px-4 relative z-10 h-[calc(100vh-4rem)] flex flex-col">
+            <div className="max-w-7xl mx-auto px-4 relative z-10 h-[calc(100vh-2rem)] flex flex-col">
                 {/* Page Header */}
                 {/* <div className="mb-8 text-center">
                     <h1 className="text-4xl sm:text-5xl font-bold mb-3 pt-8">
