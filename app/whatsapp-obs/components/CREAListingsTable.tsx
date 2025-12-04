@@ -204,7 +204,7 @@ export default function CREAListingsTable({
                             ) : (
                                 paginatedListings.map((listing) => (
                                     <>
-                                        <TableRow key={listing.id} className="hover:bg-gray-300">
+                                        <TableRow key={listing.id} className="hover:bg-gray-200">
                                             <TableCell className="align-top py-2">
                                                 <p className="text-sm text-gray-900 font-medium">
                                                     {formatDate(listing.message_date)}

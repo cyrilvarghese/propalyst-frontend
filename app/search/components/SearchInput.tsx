@@ -192,7 +192,7 @@ export default function SearchInput({
 
                     {/* Dropdown Filters */}
                     <div className="flex flex-row gap-3 flex-wrap">
-                        <div className="w-[250px]">
+                        <div className="w-[230px]">
                             <label className="text-xs font-medium text-gray-700 mb-1.5 block">Asset Type</label>
                             <Select
                                 value={propertyType}
@@ -323,7 +323,7 @@ export function SearchBar({
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <Input
                     ref={inputRef}
-                    
+
                     type="text"
                     placeholder="Search listings..."
                     value={query}

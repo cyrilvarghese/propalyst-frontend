@@ -31,13 +31,13 @@ export default function TableHeaderWithFilters(props: TableHeaderWithFiltersProp
             {/* Header Row */}
             <TableRow  >
                 <TableHead className="w-[140px] text-gray-100 font-semibold">Date</TableHead>
-                <TableHead className="w-[250px] text-gray-100 font-semibold">Agent</TableHead>
+                <TableHead className="w-[200px] text-gray-100 font-semibold">Agent</TableHead>
                 <TableHead className="w-[150px] text-gray-100 font-semibold">Asset Type</TableHead>
                 <TableHead className="w-[100px] text-gray-100 font-semibold">Bedrooms</TableHead>
-                <TableHead className="w-[150px] text-gray-100 font-semibold">Location</TableHead>
+                <TableHead className="w-[200px] text-gray-100 font-semibold">Location</TableHead>
                 <TableHead className="w-[150px] text-gray-100 font-semibold">Price</TableHead>
                 <TableHead className="w-[100px] text-gray-100 font-semibold">Type</TableHead>
-                <TableHead className="w-[80px] text-gray-100 font-semibold"></TableHead>
+                <TableHead className="w-[30px] text-gray-100 font-semibold"></TableHead>
             </TableRow>
         </TableHeader>
     )
