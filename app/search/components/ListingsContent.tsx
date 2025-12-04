@@ -11,10 +11,8 @@
 import { useEffect, useMemo, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import CREAListingsTable from '../../whatsapp-obs/components/CREAListingsTable'
-import SearchInput from './SearchInput'
+import SearchInput, { SearchBar } from './SearchInput'
 import { useWhatsAppListings } from '../hooks/useWhatsAppListings'
 import { usePagination } from '../hooks/usePagination'
 import { useListingsFilters } from '../hooks/useListingsFilters'
@@ -61,8 +59,8 @@ export default function ListingsContent() {
         search,
         loadPage,
         reset: resetListings
-    } = useWhatsAppListings({ 
-        pageSize: PAGE_SIZE, 
+    } = useWhatsAppListings({
+        pageSize: PAGE_SIZE,
         initialQuery: initialSearch,
         initialPropertyType: initialPropertyType,
         initialMessageType: initialMessageType
@@ -195,7 +193,7 @@ export default function ListingsContent() {
     // Handle search - update URL params and trigger API call
     const handleSearch = useCallback(async (query: string, propertyType?: string, messageType?: string) => {
         pagination.goToPage(1) // Reset to first page
-        updateURLParams({ 
+        updateURLParams({
             query: query,
             property_type: propertyType,
             message_type: messageType
@@ -267,7 +265,7 @@ export default function ListingsContent() {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black/80 z-0" />
 
-            <div className="max-w-7xl mx-auto px-4 relative z-10">
+            <div className="max-w-7xl mx-auto px-4 relative z-10 h-[calc(100vh-4rem)] flex flex-col">
                 {/* Page Header */}
                 {/* <div className="mb-8 text-center">
                     <h1 className="text-4xl sm:text-5xl font-bold mb-3 pt-8">
@@ -278,32 +276,6 @@ export default function ListingsContent() {
                     </p>
                 </div> */}
 
-                <div className="mb-8 flex flex-row items-center justify-between">
-                    <div className="flex flex-row items-center justify-start">
-                        <Link href="/search-web" className="text-blue-500    hover:text-blue-600 hover:underline inline-flex items-center gap-2">
-                            <ArrowLeft className="w-4 h-4" /> Back to Web Search |
-                        </Link>
-                        <p className="text-gray-200 text-lg ml-2">
-                            Browse property listings from WhatsApp messages
-                        </p>
-                    </div>
-                    {leadId && (
-                        <div className="text-gray-200 text-sm bg-gray-700/50 px-4 py-2 rounded-lg">
-                            <span className="font-semibold">Lead ID:</span> <span className="font-mono">{leadId}</span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Search Input */}
-                <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-4 mb-6">
-                    <SearchInput
-                        onSearch={handleSearch}
-                        isLoading={isLoading}
-                        initialValue={initialSearch}
-                        initialPropertyType={initialPropertyType}
-                        initialMessageType={initialMessageType}
-                    />
-                </Card>
 
                 {/* Error state */}
                 {error && (
@@ -324,41 +296,80 @@ export default function ListingsContent() {
                     </Card>
                 )}
 
-                {/* Loading state */}
-                {isLoading && (
-                    <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
-                        <div className="text-center py-12">
-                            <div className="text-gray-400 text-5xl mb-4 animate-pulse">🏠</div>
-                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                Loading listings...
-                            </h3>
+                {/* Combined Search and Table Card */}
+                <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 mb-6 flex-1 flex flex-col min-h-0">
+                    <div className="p-4 pb-0 flex-shrink-0">
+                        {/* Table Title and Search Bar */}
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-semibold text-gray-800">
+                                {initialSearch ? `Search: "${initialSearch}"` : 'Property Listings'}
+                            </h2>
+                            <SearchBar
+                                onSearch={(query) => handleSearch(query, initialPropertyType || undefined, initialMessageType || undefined)}
+                                isLoading={isLoading}
+                                initialValue={initialSearch}
+                            />
                         </div>
-                    </Card>
-                )}
 
-                {/* Listings Table */}
-                {!isLoading && (
-                    <CREAListingsTable
-                        listings={convertedListings}
-                        onLocationFilter={handleLocationFilter}
-                        locationFilter={filters.location}
-                        onAgentFilter={handleAgentFilter}
-                        agentFilter={filters.agent}
-                        onBedroomCountFilter={handleBedroomCountFilter}
-                        bedroomCountFilter={filters.bedroomCount}
-                        exactMatch={filters.exactMatch}
-                        onExactMatchToggle={handleExactMatchToggle}
-                        onResetFilters={handleResetFilters}
-                        // Pagination props
-                        onPrevious={handlePrevious}
-                        onNext={handleNext}
-                        hasPrevious={pagination.hasPrevious}
-                        hasNext={pagination.hasNext}
-                        startIndex={pagination.startIndex}
-                        endIndex={pagination.startIndex + filteredListings.length}
-                        totalCount={0} // Don't show "of X" since total count is unknown
-                    />
-                )}
+                        {/* Filters */}
+                        <div className="pb-4">
+                            <SearchInput
+                                onSearch={handleSearch}
+                                isLoading={isLoading}
+                                initialValue={initialSearch}
+                                initialPropertyType={initialPropertyType}
+                                initialMessageType={initialMessageType}
+                                onLocationFilter={handleLocationFilter}
+                                locationFilter={filters.location}
+                                onAgentFilter={handleAgentFilter}
+                                agentFilter={filters.agent}
+                                onBedroomCountFilter={handleBedroomCountFilter}
+                                bedroomCountFilter={filters.bedroomCount}
+                                initialLocation={initialLocation}
+                                initialAgent={initialAgent}
+                                initialBedrooms={initialBedrooms}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="px-4 pb-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                        {/* Loading state */}
+                        {isLoading && (
+                            <div className="text-center py-12 flex-shrink-0">
+                                <div className="text-gray-400 text-5xl mb-4 animate-pulse">🏠</div>
+                                <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                                    Loading listings...
+                                </h3>
+                            </div>
+                        )}
+
+                        {/* Listings Table */}
+                        {!isLoading && (
+                            <div className="flex-1 min-h-0 overflow-hidden">
+                                <CREAListingsTable
+                                    listings={convertedListings}
+                                    onLocationFilter={handleLocationFilter}
+                                    locationFilter={filters.location}
+                                    onAgentFilter={handleAgentFilter}
+                                    agentFilter={filters.agent}
+                                    onBedroomCountFilter={handleBedroomCountFilter}
+                                    bedroomCountFilter={filters.bedroomCount}
+                                    exactMatch={filters.exactMatch}
+                                    onExactMatchToggle={handleExactMatchToggle}
+                                    onResetFilters={handleResetFilters}
+                                    // Pagination props
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                    hasPrevious={pagination.hasPrevious}
+                                    hasNext={pagination.hasNext}
+                                    startIndex={pagination.startIndex}
+                                    endIndex={pagination.startIndex + filteredListings.length}
+                                    totalCount={0} // Don't show "of X" since total count is unknown
+                                />
+                            </div>
+                        )}
+                    </div>
+                </Card>
             </div>
         </div>
     )

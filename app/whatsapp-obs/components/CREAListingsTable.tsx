@@ -117,12 +117,46 @@ export default function CREAListingsTable({
         return typeMap[messageType] || messageType
     }
 
+    // Format asset type to title case and replace underscores with spaces
+    const formatAssetType = (assetType: string): string => {
+        if (!assetType) return 'Property'
+        return assetType
+            .replace(/_/g, ' ') // Replace underscores with spaces
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ')
+    }
+
     // Get badge variant based on message type
-    const getMessageTypeVariant = (messageType: string): 'default' | 'outline' | 'secondary' => {
-        if (messageType === 'supply_sale' || messageType === 'demand_buy') {
-            return 'default'
+    const getMessageTypeVariant = (messageType: string): string => {
+        if (messageType === 'supply_sale' || messageType === 'supply_rent') {
+            return 'bg-secondary text-secondary-foreground p-2          '
         }
-        return 'outline'
+        return ''
+    }
+
+    // Get bedroom badge color based on BHK count (1 = lightest, 4+ = darkest)
+    // Skips levels for better contrast and uses appropriate text colors for readability
+    const getBedroomBadgeColor = (configuration: string): { bg: string, text: string } => {
+        if (!configuration) return { bg: 'bg-gray-200', text: 'text-gray-800' }
+
+        // Extract number from configuration (e.g., "3BHK" -> 3, "4BHK" -> 4)
+        const match = configuration.match(/(\d+)/)
+        if (!match) return { bg: 'bg-gray-200', text: 'text-gray-800' }
+
+        const bedroomCount = parseInt(match[1])
+
+        // Map bedroom count to gray shades with skipped levels for better contrast
+        // Lighter backgrounds use dark text, darker backgrounds use white text
+        const shadeMap: { [key: number]: { bg: string, text: string } } = {
+            1: { bg: 'bg-gray-200', text: 'text-gray-800' }, // Lightest - dark text
+            2: { bg: 'bg-gray-400', text: 'text-gray-900' }, // Medium-light - dark text
+            3: { bg: 'bg-gray-600', text: 'text-white' },    // Medium-dark - white text
+            4: { bg: 'bg-gray-800', text: 'text-white' },    // Dark - white text
+        }
+
+        // For 5+ bedrooms, use darkest shade with white text
+        return shadeMap[bedroomCount] || { bg: 'bg-gray-900', text: 'text-white' }
     }
 
     const toggleRow = (id: string) => {
@@ -130,10 +164,10 @@ export default function CREAListingsTable({
     }
 
     return (
-        <div className="space-y-4">
+        <div className="h-full flex flex-col">
             {/* Table */}
-            <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-                <div className="h-[calc(100vh-200px)] relative overflow-auto">
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm flex-1 flex flex-col min-h-0">
+                <div className="flex-1 relative overflow-auto min-h-0">
                     <Table>
                         <TableHeaderWithFilters
                             onLocationFilter={onLocationFilter}
@@ -171,86 +205,83 @@ export default function CREAListingsTable({
                                 paginatedListings.map((listing) => (
                                     <>
                                         <TableRow key={listing.id} className="hover:bg-gray-50">
-                                            <TableCell className="font-medium">
-                                                <Badge variant="outline" className="text-xs">
-                                                    📅 {formatDate(listing.message_date)}
-                                                </Badge>
+                                            <TableCell className="align-top pt-3">
+                                                <p className="text-sm text-gray-900 font-medium">
+                                                    {formatDate(listing.message_date)}
+                                                </p>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="align-top pt-3">
                                                 <div className="space-y-1">
-                                                    <div className="font-medium text-sm">
+                                                    <div className="text-sm text-gray-900 font-medium">
                                                         {listing.agent_name || 'N/A'}
                                                     </div>
                                                     {listing.agent_contact && (
                                                         <>
-                                                            {/* Popover version - for testing */}
-                                                            {/* <WhatsAppMessagePopover listing={listing}>
-                                                                <button
-                                                                    className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
-                                                                >
-                                                                    📞 {listing.agent_contact}
-                                                                </button>
-                                                            </WhatsAppMessagePopover> */}
                                                             {/* Dialog version - full screen modal */}
                                                             <WhatsAppMessageDialog listing={listing}>
                                                                 <button
                                                                     className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
                                                                 >
-                                                                    📞 {listing.agent_contact}
+                                                                    📞 ({listing.agent_contact})
                                                                 </button>
                                                             </WhatsAppMessageDialog>
                                                         </>
                                                     )}
                                                     {listing.company_name && (
-                                                        <div className="text-xs text-gray-500">
+                                                        <div className="text-xs text-gray-600">
                                                             {listing.company_name}
                                                         </div>
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="font-medium">
-                                                    {listing.property_type || 'Property'}
+                                            <TableCell className="align-top pt-3">
+                                                <div className="text-sm text-gray-900 font-medium">
+                                                    {formatAssetType(listing.property_type || 'Property')}
                                                 </div>
                                                 {listing.size_sqft && (
-                                                    <div className="text-xs text-gray-500">
+                                                    <div className="text-xs text-gray-600 mt-1">
                                                         {listing.size_sqft.toLocaleString('en-IN')} sq.ft
                                                     </div>
                                                 )}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="align-top pt-3">
                                                 {listing.configuration ? (
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {listing.configuration}
-                                                    </Badge>
+                                                    (() => {
+                                                        const badgeColors = getBedroomBadgeColor(listing.configuration)
+                                                        return (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className={`text-xs ${badgeColors.bg} ${badgeColors.text}`}
+                                                            >
+                                                                {listing.configuration}
+                                                            </Badge>
+                                                        )
+                                                    })()
                                                 ) : (
                                                     <span className="text-xs text-gray-400">N/A</span>
                                                 )}
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="text-sm">
-                                                    📍 {listing.location || 'No location'}
+                                            <TableCell className="align-top pt-3">
+                                                <div className="text-sm text-gray-900 font-medium">
+                                                    {listing.location || 'No location'}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="font-semibold">
+                                            <TableCell className="align-top pt-3">
+                                                <div className="text-sm text-gray-900 font-medium">
                                                     {formatPrice(listing.price)}
                                                 </div>
                                                 {listing.price_text && (
-                                                    <div className="text-xs text-gray-500">
+                                                    <div className="text-xs text-gray-600 mt-1">
                                                         {listing.price_text}
                                                     </div>
                                                 )}
                                             </TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    variant={getMessageTypeVariant(listing.transaction_type)}
-                                                    className="text-xs"
-                                                >
+                                            <TableCell className="align-top pt-3">
+                                                <p className={`w-[100px] text-xs rounded-md p-1 ${getMessageTypeVariant(listing.transaction_type)}`}>
                                                     {formatMessageType(listing.transaction_type)}
-                                                </Badge>
+                                                </p>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="align-top pt-3">
                                                 {listing.raw_message && (
                                                     <Button
                                                         variant="ghost"

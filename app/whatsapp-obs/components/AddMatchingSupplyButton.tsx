@@ -107,7 +107,7 @@ export default function AddMatchingSupplyButton({ listing }: AddMatchingSupplyBu
         <button
             onClick={handleAddMatchingSupply}
             disabled={status === 'loading'}
-            className="inline-flex items-center gap-1.5 text-xs bg-accent text-white hover:text-accent-foreground hover:underline border border-accent rounded px-2 py-1 hover:bg-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 text-xs bg-accent    text-white hover:text-accent-foreground hover:underline border border-accent rounded px-2 py-1 hover:bg-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
             {status === 'loading' ? (
                 <>
