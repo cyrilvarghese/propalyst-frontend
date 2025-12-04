@@ -14,7 +14,7 @@ import CREAListingsTable from './CREAListingsTable'
 import SearchInput from './SearchInput'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 
 // High-end residential property background images
 const BACKGROUND_IMAGES = [
@@ -233,7 +233,9 @@ export default function ListingsContent() {
                 {isLoading && (
                     <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-6">
                         <div className="text-center py-12">
-                            <div className="text-gray-400 text-5xl mb-4 animate-pulse">🏠</div>
+                            <div className="text-slate-400 mb-4 flex justify-center">
+                                <Loader2 className="w-12 h-12 animate-spin" />
+                            </div>
                             <h3 className="text-xl font-semibold text-gray-700 mb-2">
                                 {searchQuery ? 'Searching...' : 'Loading listings...'}
                             </h3>
