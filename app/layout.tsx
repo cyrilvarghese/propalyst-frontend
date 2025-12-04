@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Propalyst Property Search",
   description: "Propalyst Property Search",
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 export default function RootLayout({

@@ -9,6 +9,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useCallback } from 'react'
+import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import CREAListingsTable from '../../whatsapp-obs/components/CREAListingsTable'
@@ -265,7 +266,7 @@ export default function ListingsContent() {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black/80 z-0" />
 
-            <div className="max-w-7xl mx-auto px-4 relative z-10 h-[calc(100vh-2rem)] flex flex-col">
+            <div className="max-w-7xl mx-auto px-4 relative z-10 min-h-[calc(100vh-2rem)] h-auto md:h-[calc(100vh-2rem)] flex flex-col">
                 {/* Page Header */}
                 {/* <div className="mb-8 text-center">
                     <h1 className="text-4xl sm:text-5xl font-bold mb-3 pt-8">
@@ -300,15 +301,29 @@ export default function ListingsContent() {
                 <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 mb-6 flex-1 flex flex-col min-h-0">
                     <div className="p-4 pb-0 flex-shrink-0">
                         {/* Table Title and Search Bar */}
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-semibold text-gray-800">
-                                {initialSearch ? `Search: "${initialSearch}"` : 'Property Listings'}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
+                            <h2 className="text-xl font-semibold text-slate-800">
+                                {initialSearch ? (
+                                    `Search: "${initialSearch}"`
+                                ) : (
+                                    <div className="relative h-10 w-48 md:h-12 md:w-64">
+                                        <Image
+                                            src="/propalyst-mls-logo.png"
+                                            alt="Propalyst MLS"
+                                            fill
+                                            className="object-contain object-left"
+                                            priority
+                                        />
+                                    </div>
+                                )}
                             </h2>
-                            <SearchBar
-                                onSearch={(query) => handleSearch(query, initialPropertyType || undefined, initialMessageType || undefined)}
-                                isLoading={isLoading}
-                                initialValue={initialSearch}
-                            />
+                            <div className="w-full md:w-auto">
+                                <SearchBar
+                                    onSearch={(query) => handleSearch(query, initialPropertyType || undefined, initialMessageType || undefined)}
+                                    isLoading={isLoading}
+                                    initialValue={initialSearch}
+                                />
+                            </div>
                         </div>
 
                         {/* Filters */}
@@ -332,7 +347,7 @@ export default function ListingsContent() {
                         </div>
                     </div>
 
-                    <div className="px-4 pb-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <div className="px-4 pb-4 flex-1 flex flex-col min-h-0 md:overflow-hidden">
                         {/* Loading state */}
                         {isLoading && (
                             <div className="text-center py-12 flex-shrink-0">

@@ -169,104 +169,103 @@ export default function SearchInput({
     return (
         <div className="space-y-3">
             {/* All Filters Group */}
-            <div className="bg-gray-200 rounded-lg border border-gray-300 p-4 space-y-4">
-                <div className="flex flex-row  gap-4 flex-wrap">
-                    {/* Text Filters Group */}
-                    {(onAgentFilter || onLocationFilter) && (
-                        <div className=" w-[250px]">
-                            {onAgentFilter && (
-                                <div className="flex-1">
-                                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Agent</label>
-                                    <Input
-                                        type="text"
-                                        placeholder="Filter by agent..."
-                                        value={agentFilter !== undefined ? agentFilter : agent}
-                                        onChange={handleAgentChange}
-                                        className="h-9 text-sm w-full shadow-sm"
-                                    />
-                                </div>
-                            )}
-
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <div className="flex flex-row gap-4 flex-wrap">
+                    {/* Agent Filter */}
+                    {onAgentFilter && (
+                        <div className="w-full md:w-[250px]">
+                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">Agent</label>
+                            <Input
+                                type="text"
+                                placeholder="Filter by agent..."
+                                value={agentFilter !== undefined ? agentFilter : agent}
+                                onChange={handleAgentChange}
+                                className="h-9 text-sm w-full shadow-sm"
+                            />
                         </div>
                     )}
 
-                    {/* Dropdown Filters */}
-                    <div className="flex flex-row gap-3 flex-wrap">
-                        <div className="w-[230px]">
-                            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Asset Type</label>
+                    {/* Asset Type Filter */}
+                    <div className="w-full md:w-[230px]">
+                        <label className="text-xs font-medium text-slate-700 mb-1.5 block">Asset Type</label>
+                        <Select
+                            value={propertyType}
+                            onValueChange={handlePropertyTypeChange}
+                        >
+                            <SelectTrigger className="h-9 text-sm w-full shadow-sm">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Asset Types</SelectItem>
+                                <SelectItem value="apartment">Apartment</SelectItem>
+                                <SelectItem value="villa">Villa</SelectItem>
+                                <SelectItem value="independent_house">Independent House</SelectItem>
+                                <SelectItem value="plot">Plot</SelectItem>
+                                <SelectItem value="office">Office</SelectItem>
+                                <SelectItem value="retail">Retail</SelectItem>
+                                <SelectItem value="warehouse">Warehouse</SelectItem>
+                                <SelectItem value="pg_hostel">PG/Hostel</SelectItem>
+                                <SelectItem value="farmhouse">Farmhouse</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Bedrooms Filter */}
+                    {onBedroomCountFilter && (
+                        <div className="w-full md:w-[100px]">
+                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">Bedrooms</label>
                             <Select
-                                value={propertyType}
-                                onValueChange={handlePropertyTypeChange}
+                                value={bedroomCountFilter !== undefined ? (bedroomCountFilter || 'all') : bedrooms}
+                                onValueChange={handleBedroomsChange}
                             >
                                 <SelectTrigger className="h-9 text-sm w-full shadow-sm">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Asset Types</SelectItem>
-                                    <SelectItem value="apartment">Apartment</SelectItem>
-                                    <SelectItem value="villa">Villa</SelectItem>
-                                    <SelectItem value="independent_house">Independent House</SelectItem>
-                                    <SelectItem value="plot">Plot</SelectItem>
-                                    <SelectItem value="office">Office</SelectItem>
-                                    <SelectItem value="retail">Retail</SelectItem>
-                                    <SelectItem value="warehouse">Warehouse</SelectItem>
-                                    <SelectItem value="pg_hostel">PG/Hostel</SelectItem>
-                                    <SelectItem value="farmhouse">Farmhouse</SelectItem>
+                                    <SelectItem value="all">All bedrooms</SelectItem>
+                                    <SelectItem value="1">1 BHK</SelectItem>
+                                    <SelectItem value="2">2 BHK</SelectItem>
+                                    <SelectItem value="3">3 BHK</SelectItem>
+                                    <SelectItem value="4">4 BHK</SelectItem>
+                                    <SelectItem value="5">5 BHK</SelectItem>
+                                    <SelectItem value="6">6+ BHK</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
-                        {onBedroomCountFilter && (
-                            <div className="w-[100px]">
-                                <label className="text-xs font-medium text-gray-700 mb-1.5 block">Bedrooms</label>
-                                <Select
-                                    value={bedroomCountFilter !== undefined ? (bedroomCountFilter || 'all') : bedrooms}
-                                    onValueChange={handleBedroomsChange}
-                                >
-                                    <SelectTrigger className="h-9 text-sm w-full shadow-sm">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All bedrooms</SelectItem>
-                                        <SelectItem value="1">1 BHK</SelectItem>
-                                        <SelectItem value="2">2 BHK</SelectItem>
-                                        <SelectItem value="3">3 BHK</SelectItem>
-                                        <SelectItem value="4">4 BHK</SelectItem>
-                                        <SelectItem value="5">5 BHK</SelectItem>
-                                        <SelectItem value="6">6+ BHK</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-                        {onLocationFilter && (
-                            <div className="w-[200px]">
-                                <label className="text-xs font-medium text-gray-700 mb-1.5 block">Location</label>
-                                <Input
-                                    type="text"
-                                    placeholder="Filter by location..."
-                                    value={locationFilter !== undefined ? locationFilter : location}
-                                    onChange={handleLocationChange}
-                                    className="h-9 text-sm w-full shadow-sm"
-                                />
-                            </div>
-                        )}
-                        <div className="w-[300px]">
-                            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Message Type</label>
-                            <Select
-                                value={messageType}
-                                onValueChange={handleMessageTypeChange}
-                            >
-                                <SelectTrigger className="h-9 text-sm w-full shadow-sm">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Message Types</SelectItem>
-                                    <SelectItem value="supply_sale">Supply - Sale</SelectItem>
-                                    <SelectItem value="supply_rent">Supply - Rent</SelectItem>
-                                    <SelectItem value="demand_buy">Demand - Buy</SelectItem>
-                                    <SelectItem value="demand_rent">Demand - Rent</SelectItem>
-                                </SelectContent>
-                            </Select>
+                    )}
+
+                    {/* Location Filter */}
+                    {onLocationFilter && (
+                        <div className="w-full md:w-[200px]">
+                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">Location</label>
+                            <Input
+                                type="text"
+                                placeholder="Filter by location..."
+                                value={locationFilter !== undefined ? locationFilter : location}
+                                onChange={handleLocationChange}
+                                className="h-9 text-sm w-full shadow-sm"
+                            />
                         </div>
+                    )}
+
+                    {/* Message Type Filter */}
+                    <div className="w-full md:w-[300px]">
+                        <label className="text-xs font-medium text-slate-700 mb-1.5 block">Message Type</label>
+                        <Select
+                            value={messageType}
+                            onValueChange={handleMessageTypeChange}
+                        >
+                            <SelectTrigger className="h-9 text-sm w-full shadow-sm">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Message Types</SelectItem>
+                                <SelectItem value="supply_sale">Supply - Sale</SelectItem>
+                                <SelectItem value="supply_rent">Supply - Rent</SelectItem>
+                                <SelectItem value="demand_buy">Demand - Buy</SelectItem>
+                                <SelectItem value="demand_rent">Demand - Rent</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
             </div>
@@ -318,9 +317,9 @@ export function SearchBar({
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:flex-none">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 <Input
                     ref={inputRef}
 
@@ -329,7 +328,7 @@ export function SearchBar({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="pl-10 h-10 w-80 text-sm shadow-md"
+                    className="pl-10 h-10 w-full md:w-80 text-sm shadow-md"
                     disabled={isLoading}
                 />
             </div>
@@ -337,7 +336,7 @@ export function SearchBar({
                 onClick={handleSearch}
                 disabled={isLoading}
                 size="icon"
-                className="h-10 w-10 bg-accent hover:bg-accent/90 text-white disabled:opacity-50 shadow-md"
+                className="h-10 w-10 bg-accent hover:bg-accent/90 text-white disabled:opacity-50 shadow-md flex-shrink-0"
             >
                 {isLoading ? (
                     <Search className="w-4 h-4 animate-pulse" />
