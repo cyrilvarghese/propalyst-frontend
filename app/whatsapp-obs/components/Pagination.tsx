@@ -34,8 +34,8 @@ export default function Pagination({
     sticky = true
 }: PaginationProps) {
     const containerClassName = sticky
-        ? 'sticky bottom-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-lg rounded-t-lg px-4 py-1.5 z-50'
-        : 'bg-white border-t border-gray-200 shadow-sm rounded-t-lg px-4 py-1.5'
+        ? 'sticky bottom-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-lg rounded-t-lg px-4 py-1.5 z-50 mt-2'
+        : 'bg-white border-t border-gray-200 shadow-sm rounded-t-lg px-4 py-1.5 mt-2'
 
     return (
         <div className={containerClassName}>

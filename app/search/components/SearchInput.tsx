@@ -170,11 +170,13 @@ export default function SearchInput({
         <div className="space-y-3">
             {/* All Filters Group */}
             <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-                <div className="flex flex-row gap-4 flex-wrap">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {/* Agent Filter */}
                     {onAgentFilter && (
-                        <div className="w-full md:w-[250px]">
-                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">Agent</label>
+                        <div className="w-full">
+                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">
+                                Agent
+                            </label>
                             <Input
                                 type="text"
                                 placeholder="Filter by agent..."
@@ -186,13 +188,15 @@ export default function SearchInput({
                     )}
 
                     {/* Asset Type Filter */}
-                    <div className="w-full md:w-[230px]">
-                        <label className="text-xs font-medium text-slate-700 mb-1.5 block">Asset Type</label>
+                    <div className="w-full">
+                        <label className="text-xs font-medium text-slate-700 mb-1.5 block">
+                            Asset Type
+                        </label>
                         <Select
                             value={propertyType}
                             onValueChange={handlePropertyTypeChange}
                         >
-                            <SelectTrigger className="h-9 text-sm w-full shadow-sm">
+                            <SelectTrigger className="h-9 text-sm w-full shadow-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -212,13 +216,15 @@ export default function SearchInput({
 
                     {/* Bedrooms Filter */}
                     {onBedroomCountFilter && (
-                        <div className="w-full md:w-[100px]">
-                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">Bedrooms</label>
+                        <div className="w-full">
+                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">
+                                Bedrooms
+                            </label>
                             <Select
                                 value={bedroomCountFilter !== undefined ? (bedroomCountFilter || 'all') : bedrooms}
                                 onValueChange={handleBedroomsChange}
                             >
-                                <SelectTrigger className="h-9 text-sm w-full shadow-sm">
+                                <SelectTrigger className="h-9 text-sm w-full shadow-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -236,8 +242,10 @@ export default function SearchInput({
 
                     {/* Location Filter */}
                     {onLocationFilter && (
-                        <div className="w-full md:w-[200px]">
-                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">Location</label>
+                        <div className="w-full">
+                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">
+                                Location
+                            </label>
                             <Input
                                 type="text"
                                 placeholder="Filter by location..."
@@ -249,13 +257,15 @@ export default function SearchInput({
                     )}
 
                     {/* Message Type Filter */}
-                    <div className="w-full md:w-[300px]">
-                        <label className="text-xs font-medium text-slate-700 mb-1.5 block">Message Type</label>
+                    <div className="w-full">
+                        <label className="text-xs font-medium text-slate-700 mb-1.5 block">
+                            Message Type
+                        </label>
                         <Select
                             value={messageType}
                             onValueChange={handleMessageTypeChange}
                         >
-                            <SelectTrigger className="h-9 text-sm w-full shadow-sm">
+                            <SelectTrigger className="h-9 text-sm w-full shadow-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

@@ -20,6 +20,13 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Loader2, Send, MessageSquare, Phone } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import { CREAMessageService } from '@/lib/services/crea-message.service'
@@ -27,12 +34,14 @@ import { CREAMessageService } from '@/lib/services/crea-message.service'
 interface WhatsAppMessageDialogProps {
     listing: CREAListing
     children: React.ReactNode
+    initialPhoneNumber?: string
 }
 
-export default function WhatsAppMessageDialog({ listing, children }: WhatsAppMessageDialogProps) {
+export default function WhatsAppMessageDialog({ listing, children, initialPhoneNumber }: WhatsAppMessageDialogProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [message, setMessage] = useState<string>('')
     const [phoneNumber, setPhoneNumber] = useState<string>('')
+    const [availableNumbers, setAvailableNumbers] = useState<string[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -69,10 +78,19 @@ export default function WhatsAppMessageDialog({ listing, children }: WhatsAppMes
     // Initialize phone number and generate message when dialog opens
     useEffect(() => {
         if (isOpen) {
-            // Initialize phone number from listing only once when dialog opens
-            if (listing.agent_contact) {
-                setPhoneNumber(listing.agent_contact)
+            // Parse available numbers
+            const numbers = listing.agent_contact
+                ? listing.agent_contact.split(/[,/\n]+/).map(n => n.trim()).filter(Boolean)
+                : []
+            setAvailableNumbers(numbers)
+
+            // Initialize phone number
+            if (initialPhoneNumber) {
+                setPhoneNumber(initialPhoneNumber)
+            } else if (numbers.length > 0) {
+                setPhoneNumber(numbers[0])
             }
+
             // Generate message if not already loaded
             if (!message && !isLoading && listing.agent_contact) {
                 generateMessage()
@@ -80,8 +98,9 @@ export default function WhatsAppMessageDialog({ listing, children }: WhatsAppMes
         } else {
             // Reset phone number when dialog closes
             setPhoneNumber('')
+            setAvailableNumbers([])
         }
-    }, [isOpen, message, isLoading, listing.agent_contact, generateMessage])
+    }, [isOpen, message, isLoading, listing.agent_contact, generateMessage, initialPhoneNumber])
 
     // Format phone number for WhatsApp
     const formatPhoneForWhatsApp = (phone: string): string => {
@@ -112,8 +131,12 @@ export default function WhatsAppMessageDialog({ listing, children }: WhatsAppMes
             <DialogTrigger asChild >
                 {children}
             </DialogTrigger>
-            <DialogContent aria-describedby='message-text-dialog' className="max-w-[50vw] h-[55vh] max-h-[95vh] flex flex-col p-4">
-                <DialogHeader> <DialogTitle>Message - {listing.agent_name || 'Agent'} ({listing.company_name})</DialogTitle>         </DialogHeader>
+            <DialogContent aria-describedby='message-text-dialog' className="w-[95vw] md:max-w-[50vw] h-[80vh] md:h-[55vh] max-h-[95vh] flex flex-col p-4 rounded-xl shadow-xl border border-slate-200">
+                <DialogHeader>
+                    <DialogTitle>
+                        Message {listing.agent_name ? `- ${listing.agent_name}` : ''} {listing.company_name ? `(${listing.company_name})` : ''}
+                    </DialogTitle>
+                </DialogHeader>
 
 
                 <div className="flex-1 overflow-y-auto py-3">
@@ -139,29 +162,46 @@ export default function WhatsAppMessageDialog({ listing, children }: WhatsAppMes
                 </div>
 
                 {/* Footer with Phone number and Send button */}
-                <div className="flex items-center justify-start gap-3 pt-3 border-t">
-                    <div className="flex items-center gap-2 w-[140px]" >
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-3 border-t">
+                    <div className="flex items-center gap-2 w-full md:w-[180px]" >
                         <Phone className="h-4 w-4 text-gray-500 shrink-0" />
-                        <Input
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleSend()
-                                }
-                            }}
-                            id="phone-number-dialog"
-                            type="tel"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            placeholder="Phone number"
-                            className="h-9 text-sm flex-1 max-w-xs"
-                        />
+                        {availableNumbers.length > 1 && !initialPhoneNumber ? (
+                            <Select
+                                value={phoneNumber}
+                                onValueChange={setPhoneNumber}
+                            >
+                                <SelectTrigger className="h-9 w-full">
+                                    <SelectValue placeholder="Select number" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableNumbers.map((num, idx) => (
+                                        <SelectItem key={idx} value={num}>
+                                            {num}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        ) : (
+                            <Input
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSend()
+                                    }
+                                }}
+                                id="phone-number-dialog"
+                                type="tel"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                placeholder="Phone number"
+                                className="h-9 text-sm flex-1"
+                            />
+                        )}
                     </div>
                     <Button
                         onClick={handleSend}
-
                         disabled={!message || !phoneNumber || isLoading}
                         size="sm"
-                        className="gap-2"
+                        className="gap-2 w-full md:w-auto"
                     >
                         <Send className="h-4 w-4" />
                         Message {listing.agent_name}

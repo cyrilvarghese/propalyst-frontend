@@ -27,19 +27,10 @@ import {
     Building2,
     Phone,
     Home,
-    BedDouble,
-    Maximize2,
     CheckCircle2,
     Compass,
     Armchair,
-    Car,
-    Briefcase,
-    Store,
-    Box,
-    Users,
-    Trees,
-    Map,
-    LandPlot
+    Car
 } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import TableHeaderWithFilters from './TableHeaderWithFilters'
@@ -114,19 +105,13 @@ export default function CREAListingsTable({
         return 'Price on request'
     }
 
-    // Format date and time (without year)
+    // Format date (without year and time)
     const formatDate = (dateString: string): string => {
         const date = new Date(dateString)
-        const dateStr = date.toLocaleDateString('en-IN', {
+        return date.toLocaleDateString('en-IN', {
             month: 'short',
             day: 'numeric',
         })
-        const timeStr = date.toLocaleTimeString('en-IN', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-        })
-        return `${dateStr} ${timeStr}`
     }
 
     // Format message type for display
@@ -144,25 +129,10 @@ export default function CREAListingsTable({
     // Get color for asset type - SaaS style: Clean, uniform, high contrast text
     const getAssetTypeColor = (assetType: string): string => {
         // Uniform elegant style for all asset types to reduce visual noise
-        return 'text-slate-700 bg-white border-slate-200 font-medium'
+        return 'text-slate-600 bg-slate-50 border-slate-200 font-medium'
     }
 
-    // Get icon for asset type
-    const getAssetTypeIcon = (assetType: string) => {
-        if (!assetType) return <Home className="w-3.5 h-3.5" />
 
-        const type = assetType.toLowerCase()
-        if (type.includes('apartment') || type.includes('flat')) return <Building2 className="w-3.5 h-3.5" />
-        if (type.includes('villa') || type.includes('house')) return <Home className="w-3.5 h-3.5" />
-        if (type.includes('plot') || type.includes('land')) return <LandPlot className="w-3.5 h-3.5" />
-        if (type.includes('office')) return <Briefcase className="w-3.5 h-3.5" />
-        if (type.includes('retail') || type.includes('shop')) return <Store className="w-3.5 h-3.5" />
-        if (type.includes('warehouse') || type.includes('godown')) return <Box className="w-3.5 h-3.5" />
-        if (type.includes('pg') || type.includes('hostel')) return <Users className="w-3.5 h-3.5" />
-        if (type.includes('farm')) return <Trees className="w-3.5 h-3.5" />
-
-        return <Home className="w-3.5 h-3.5" />
-    }
 
     // Format asset type to title case and replace underscores with spaces
     const formatAssetType = (assetType: string): string => {
@@ -174,36 +144,14 @@ export default function CREAListingsTable({
             .join(' ')
     }
 
-    // Get badge variant based on message type - Elegant pastel tones
+    // Get badge variant based on message type - Uniform grey
     const getMessageTypeVariant = (messageType: string): string => {
-        if (messageType === 'supply_sale') return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-        if (messageType === 'supply_rent') return 'bg-blue-50 text-blue-700 border border-blue-200'
-        if (messageType === 'demand_buy') return 'bg-rose-50 text-rose-700 border border-rose-200'
-        if (messageType === 'demand_rent') return 'bg-amber-50 text-amber-700 border border-amber-200'
-        return 'bg-gray-50 text-gray-700 border border-gray-200'
+        return 'bg-slate-100 text-slate-700 border-slate-300'
     }
 
-    // Get bedroom badge color based on BHK count (1 = lightest, 4+ = darkest)
-    // Skips levels for better contrast and uses appropriate text colors for readability
+    // Get bedroom badge color - Uniform pastel style
     const getBedroomBadgeColor = (configuration: string): { bg: string, text: string } => {
-        if (!configuration) return { bg: 'bg-gray-200', text: 'text-gray-800' }
-
-        // Extract number from configuration (e.g., "3BHK" -> 3, "4BHK" -> 4)
-        const match = configuration.match(/(\d+)/)
-        if (!match) return { bg: 'bg-gray-200', text: 'text-gray-800' }
-
-        const bedroomCount = parseInt(match[1])
-
-        // Map bedroom count to elegant dark shades
-        const shadeMap: { [key: number]: { bg: string, text: string } } = {
-            1: { bg: 'bg-slate-100 hover:bg-slate-100', text: 'text-slate-700 border-slate-200' },
-            2: { bg: 'bg-slate-200 hover:bg-slate-200', text: 'text-slate-800 border-slate-300' },
-            3: { bg: 'bg-slate-300 hover:bg-slate-300', text: 'text-slate-900 border-slate-400' },
-            4: { bg: 'bg-slate-400 hover:bg-slate-400', text: 'text-white border-slate-500' },
-        }
-
-        // Default for 5+ or others
-        return shadeMap[bedroomCount] || { bg: 'bg-slate-800 hover:bg-slate-800', text: 'text-white border-slate-700' }
+        return { bg: 'bg-slate-50 hover:bg-slate-100', text: 'text-slate-600 border-slate-200' }
     }
 
     const toggleRow = (id: string) => {
@@ -265,16 +213,21 @@ export default function CREAListingsTable({
                                                         {listing.agent_name || 'N/A'}
                                                     </div>
                                                     {listing.agent_contact && (
-                                                        <>
-                                                            {/* Dialog version - full screen modal */}
-                                                            <WhatsAppMessageDialog listing={listing}>
-                                                                <button
-                                                                    className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
-                                                                >
-                                                                    <Phone className="w-3 h-3" /> ({listing.agent_contact})
-                                                                </button>
-                                                            </WhatsAppMessageDialog>
-                                                        </>
+                                                        <div className="flex flex-col gap-1 items-start">
+                                                            {listing.agent_contact.split(/[,/\n]+/).map((contact, index) => {
+                                                                const cleanContact = contact.trim()
+                                                                if (!cleanContact) return null
+                                                                return (
+                                                                    <WhatsAppMessageDialog key={index} listing={listing} initialPhoneNumber={cleanContact}>
+                                                                        <button
+                                                                            className="text-xs text-slate-600 hover:text-slate-900 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                                                        >
+                                                                            <Phone className="w-3 h-3" /> ({cleanContact})
+                                                                        </button>
+                                                                    </WhatsAppMessageDialog>
+                                                                )
+                                                            })}
+                                                        </div>
                                                     )}
                                                     {listing.company_name && (
                                                         <div className="text-xs text-slate-500">
@@ -284,13 +237,11 @@ export default function CREAListingsTable({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="align-top py-3">
-                                                <div className={`text-xs font-medium px-2 py-1 rounded-md border w-fit flex items-center gap-1.5 ${getAssetTypeColor(listing.property_type)}`}>
-                                                    {getAssetTypeIcon(listing.property_type)}
+                                                <div className={`text-xs font-medium px-2 py-1 rounded-md border w-fit flex items-center ${getAssetTypeColor(listing.property_type)}`}>
                                                     {formatAssetType(listing.property_type || 'Property')}
                                                 </div>
                                                 {(listing.size_sqft || 0) > 0 && (
-                                                    <div className="text-xs font-medium px-2 py-1 rounded-md border bg-slate-50 text-slate-600 border-slate-200 w-fit mt-1.5 flex items-center gap-1.5">
-                                                        <Maximize2 className="w-3.5 h-3.5" />
+                                                    <div className="text-xs font-medium px-2 py-1 rounded-md border bg-slate-50 text-slate-600 border-slate-200 w-fit mt-1.5 flex items-center">
                                                         {listing.size_sqft?.toLocaleString('en-IN')} sq.ft
                                                     </div>
                                                 )}
@@ -302,9 +253,8 @@ export default function CREAListingsTable({
                                                         return (
                                                             <Badge
                                                                 variant="secondary"
-                                                                className={`text-xs border gap-1.5 ${badgeColors.bg} ${badgeColors.text}`}
+                                                                className={`text-xs border ${badgeColors.bg} ${badgeColors.text}`}
                                                             >
-                                                                <BedDouble className="w-3.5 h-3.5" />
                                                                 {listing.configuration}
                                                             </Badge>
                                                         )
@@ -339,7 +289,7 @@ export default function CREAListingsTable({
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => toggleRow(listing.id)}
-                                                        className="h-8 w-8 p-0 bg-[#e47d72] hover:bg-[#e47d72] text-white rounded-md transition-colors"
+                                                        className="h-8 w-8 p-0 bg-transparent hover:bg-transparent text-black hover:text-black rounded-md transition-none"
                                                     >
                                                         {expandedRow === listing.id ? (
                                                             <ChevronUp className="h-4 w-4" />
@@ -361,27 +311,27 @@ export default function CREAListingsTable({
                                                         {(listing.status || listing.facing || listing.floor || listing.parking || listing.furnishing) && (
                                                             <div className="flex flex-wrap gap-2">
                                                                 {listing.status && (
-                                                                    <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                                                                    <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600 border-slate-200 gap-1">
                                                                         <CheckCircle2 className="w-3 h-3" /> {listing.status}
                                                                     </Badge>
                                                                 )}
                                                                 {listing.facing && (
-                                                                    <Badge variant="outline" className="text-xs bg-white text-slate-600 border-slate-200 gap-1">
+                                                                    <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600 border-slate-200 gap-1">
                                                                         <Compass className="w-3 h-3" /> {listing.facing}
                                                                     </Badge>
                                                                 )}
                                                                 {listing.floor && (
-                                                                    <Badge variant="outline" className="text-xs bg-white text-slate-600 border-slate-200 gap-1">
+                                                                    <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600 border-slate-200 gap-1">
                                                                         <Building2 className="w-3 h-3" /> {listing.floor}
                                                                     </Badge>
                                                                 )}
                                                                 {listing.parking && (
-                                                                    <Badge variant="outline" className="text-xs bg-white text-slate-600 border-slate-200 gap-1">
+                                                                    <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600 border-slate-200 gap-1">
                                                                         <Car className="w-3 h-3" /> {listing.parking}
                                                                     </Badge>
                                                                 )}
                                                                 {listing.furnishing && (
-                                                                    <Badge variant="outline" className="text-xs bg-white text-slate-600 border-slate-200 gap-1">
+                                                                    <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600 border-slate-200 gap-1">
                                                                         <Armchair className="w-3 h-3" /> {listing.furnishing}
                                                                     </Badge>
                                                                 )}
@@ -441,19 +391,17 @@ export default function CREAListingsTable({
                                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
                                     <span>{formatDate(listing.message_date)}</span>
                                 </div>
-                                <span className="font-bold text-lg text-emerald-600 tracking-tight">{formatPrice(listing.price)}</span>
+                                <span className="font-bold text-lg text-slate-900 tracking-tight">{formatPrice(listing.price)}</span>
                             </div>
 
                             {/* Main Info */}
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <div className={`text-xs font-medium px-2.5 py-1 rounded-md border flex items-center gap-1.5 ${getAssetTypeColor(listing.property_type)}`}>
-                                        {getAssetTypeIcon(listing.property_type)}
+                                    <div className={`text-xs font-medium px-2.5 py-1 rounded-md border flex items-center ${getAssetTypeColor(listing.property_type)}`}>
                                         {formatAssetType(listing.property_type)}
                                     </div>
                                     {(listing.size_sqft || 0) > 0 && (
-                                        <div className="text-xs font-medium px-2.5 py-1 rounded-md border bg-slate-50 text-slate-600 border-slate-200 flex items-center gap-1.5">
-                                            <Maximize2 className="w-3.5 h-3.5" />
+                                        <div className="text-xs font-medium px-2.5 py-1 rounded-md border bg-slate-50 text-slate-600 border-slate-200 flex items-center">
                                             {listing.size_sqft?.toLocaleString('en-IN')} sq.ft
                                         </div>
                                     )}
@@ -463,9 +411,8 @@ export default function CREAListingsTable({
                                             return (
                                                 <Badge
                                                     variant="secondary"
-                                                    className={`text-xs border gap-1.5 ${badgeColors.bg} ${badgeColors.text}`}
+                                                    className={`text-xs border ${badgeColors.bg} ${badgeColors.text}`}
                                                 >
-                                                    <BedDouble className="w-3.5 h-3.5" />
                                                     {listing.configuration}
                                                 </Badge>
                                             )
@@ -513,7 +460,7 @@ export default function CREAListingsTable({
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="w-full text-xs font-medium h-9 bg-[#e47d72] hover:bg-[#e47d72] text-white border border-[#e47d72] shadow-sm"
+                                        className="w-full text-xs font-medium h-9 bg-transparent hover:bg-transparent text-black hover:text-black border-none shadow-none transition-none"
                                         onClick={() => toggleRow(listing.id)}
                                     >
                                         {expandedRow === listing.id ? 'Hide Details' : 'View Details'}

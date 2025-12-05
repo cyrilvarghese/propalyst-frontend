@@ -26,17 +26,17 @@ interface TableHeaderWithFiltersProps {
 
 export default function TableHeaderWithFilters(props: TableHeaderWithFiltersProps) {
     return (
-        <TableHeader className="sticky top-0 bg-[#0F172A] z-10 shadow-md">
+        <TableHeader className="sticky top-0 bg-gray-500 z-10 shadow-md">
             {/* Header Row */}
-            <TableRow className="hover:bg-[#0F172A] border-b border-gray-800">
-                <TableHead className="w-[140px] text-gray-300 font-medium py-4">Date</TableHead>
-                <TableHead className="w-[200px] text-gray-300 font-medium py-4">Agent</TableHead>
-                <TableHead className="w-[150px] text-gray-300 font-medium py-4">Asset Type</TableHead>
-                <TableHead className="w-[100px] text-gray-300 font-medium py-4">Bedrooms</TableHead>
-                <TableHead className="w-[200px] text-gray-300 font-medium py-4">Location</TableHead>
-                <TableHead className="w-[150px] text-gray-300 font-medium py-4">Price</TableHead>
-                <TableHead className="w-[100px] text-gray-300 font-medium py-4">Type</TableHead>
-                <TableHead className="w-[30px] text-gray-300 font-medium py-4"></TableHead>
+            <TableRow className="hover:bg-gray-500">
+                <TableHead className="w-[80px] text-white font-medium py-4">Date</TableHead>
+                <TableHead className="w-[220px] text-white font-medium py-4">Agent</TableHead>
+                <TableHead className="w-[130px] text-white font-medium py-4">Asset Type</TableHead>
+                <TableHead className="w-[90px] text-white font-medium py-4">Bedrooms</TableHead>
+                <TableHead className="w-[250px] text-white font-medium py-4">Location</TableHead>
+                <TableHead className="w-[120px] text-white font-medium py-4">Price</TableHead>
+                <TableHead className="w-[120px] text-white font-medium py-4">Type</TableHead>
+                <TableHead className="w-[40px] text-white font-medium py-4"></TableHead>
             </TableRow>
         </TableHeader>
     )
