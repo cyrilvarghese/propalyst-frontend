@@ -8,7 +8,7 @@
 
 'use client'
 
-import { useState, KeyboardEvent, useEffect, useRef } from 'react'
+import { useState, KeyboardEvent, useEffect, useRef, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,7 +18,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface SearchInputProps {
     onSearch: (query: string, propertyType?: string, messageType?: string) => void
@@ -36,6 +37,8 @@ interface SearchInputProps {
     initialLocation?: string
     initialAgent?: string
     initialBedrooms?: string
+    onResetFilters?: () => void
+    onFilterCountChange?: (count: number) => void
 }
 
 export default function SearchInput({
@@ -52,7 +55,9 @@ export default function SearchInput({
     bedroomCountFilter = '',
     initialLocation = '',
     initialAgent = '',
-    initialBedrooms = ''
+    initialBedrooms = '',
+    onResetFilters,
+    onFilterCountChange
 }: SearchInputProps) {
     const [query, setQuery] = useState(initialValue)
     const [propertyType, setPropertyType] = useState(initialPropertyType || 'all')
@@ -166,14 +171,38 @@ export default function SearchInput({
         onBedroomCountFilter?.(bedroomValue)
     }
 
+    // Check which filters are active for data attributes
+    const isAgentActive = (agentFilter !== undefined ? agentFilter : agent)?.trim() || false
+    const isLocationActive = (locationFilter !== undefined ? locationFilter : location)?.trim() || false
+    const isPropertyTypeActive = propertyType !== 'all'
+    const isMessageTypeActive = messageType !== 'all'
+    const isBedroomsActive = (bedroomCountFilter !== undefined ? (bedroomCountFilter || 'all') : bedrooms) !== 'all'
+
+    // Count active filters by querying DOM for filter-active class
+    const [activeFilterCount, setActiveFilterCount] = useState(0)
+    const filtersContainerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        // Small delay to ensure DOM is updated
+        const timer = setTimeout(() => {
+            if (filtersContainerRef.current) {
+                const activeFilters = filtersContainerRef.current.querySelectorAll('.filter-active')
+                const count = activeFilters.length
+                setActiveFilterCount(count)
+                onFilterCountChange?.(count)
+            }
+        }, 0)
+        return () => clearTimeout(timer)
+    }, [isAgentActive, isLocationActive, isPropertyTypeActive, isMessageTypeActive, isBedroomsActive, onFilterCountChange])
+
     return (
         <div className="space-y-3">
             {/* All Filters Group */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <div ref={filtersContainerRef} className="bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {/* Agent Filter */}
                     {onAgentFilter && (
-                        <div className="w-full">
+                        <div className={cn("w-full", isAgentActive && "filter-active")}>
                             <label className="text-xs font-medium text-slate-700 mb-1.5 block">
                                 Agent
                             </label>
@@ -182,13 +211,16 @@ export default function SearchInput({
                                 placeholder="Filter by agent..."
                                 value={agentFilter !== undefined ? agentFilter : agent}
                                 onChange={handleAgentChange}
-                                className="h-9 text-sm w-full shadow-sm"
+                                className={cn(
+                                    "h-9 text-sm w-full shadow-sm",
+                                    isAgentActive && "border-2 border-accent focus-visible:ring-accent"
+                                )}
                             />
                         </div>
                     )}
 
                     {/* Asset Type Filter */}
-                    <div className="w-full">
+                    <div className={cn("w-full", isPropertyTypeActive && "filter-active")}>
                         <label className="text-xs font-medium text-slate-700 mb-1.5 block">
                             Asset Type
                         </label>
@@ -196,7 +228,10 @@ export default function SearchInput({
                             value={propertyType}
                             onValueChange={handlePropertyTypeChange}
                         >
-                            <SelectTrigger className="h-9 text-sm w-full shadow-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                            <SelectTrigger className={cn(
+                                "h-9 text-sm w-full shadow-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-offset-2",
+                                isPropertyTypeActive && "border-2 border-accent focus-visible:ring-accent"
+                            )}>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -216,7 +251,7 @@ export default function SearchInput({
 
                     {/* Bedrooms Filter */}
                     {onBedroomCountFilter && (
-                        <div className="w-full">
+                        <div className={cn("w-full", isBedroomsActive && "filter-active")}>
                             <label className="text-xs font-medium text-slate-700 mb-1.5 block">
                                 Bedrooms
                             </label>
@@ -224,7 +259,10 @@ export default function SearchInput({
                                 value={bedroomCountFilter !== undefined ? (bedroomCountFilter || 'all') : bedrooms}
                                 onValueChange={handleBedroomsChange}
                             >
-                                <SelectTrigger className="h-9 text-sm w-full shadow-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                                <SelectTrigger className={cn(
+                                    "h-9 text-sm w-full shadow-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-offset-2",
+                                    isBedroomsActive && "border-2 border-accent focus-visible:ring-accent"
+                                )}>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -242,7 +280,7 @@ export default function SearchInput({
 
                     {/* Location Filter */}
                     {onLocationFilter && (
-                        <div className="w-full">
+                        <div className={cn("w-full", isLocationActive && "filter-active")}>
                             <label className="text-xs font-medium text-slate-700 mb-1.5 block">
                                 Location
                             </label>
@@ -251,13 +289,16 @@ export default function SearchInput({
                                 placeholder="Filter by location..."
                                 value={locationFilter !== undefined ? locationFilter : location}
                                 onChange={handleLocationChange}
-                                className="h-9 text-sm w-full shadow-sm"
+                                className={cn(
+                                    "h-9 text-sm w-full shadow-sm",
+                                    isLocationActive && "border-2 border-accent focus-visible:ring-accent"
+                                )}
                             />
                         </div>
                     )}
 
                     {/* Message Type Filter */}
-                    <div className="w-full">
+                    <div className={cn("w-full", isMessageTypeActive && "filter-active")}>
                         <label className="text-xs font-medium text-slate-700 mb-1.5 block">
                             Message Type
                         </label>
@@ -265,7 +306,10 @@ export default function SearchInput({
                             value={messageType}
                             onValueChange={handleMessageTypeChange}
                         >
-                            <SelectTrigger className="h-9 text-sm w-full shadow-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                            <SelectTrigger className={cn(
+                                "h-9 text-sm w-full shadow-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-offset-2",
+                                messageType !== 'all' && "border-2 border-accent focus-visible:ring-accent"
+                            )}>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -287,11 +331,15 @@ export default function SearchInput({
 export function SearchBar({
     onSearch,
     isLoading,
-    initialValue = ''
+    initialValue = '',
+    activeFilterCount = 0,
+    onResetFilters
 }: {
     onSearch: (query: string) => void
     isLoading?: boolean
     initialValue?: string
+    activeFilterCount?: number
+    onResetFilters?: () => void
 }) {
     const [query, setQuery] = useState(initialValue)
     const inputRef = useRef<HTMLInputElement>(null)
@@ -326,22 +374,47 @@ export function SearchBar({
         }
     }
 
+    const handleClear = () => {
+        setQuery('')
+        // Trigger search with empty query to reflect cleared data
+        onSearch('')
+    }
+
     return (
         <div className="flex items-center gap-2 w-full md:w-auto">
+            {/* Filter count with reset */}
+            {/* {activeFilterCount > 0 && (
+                // <div className=" flex items-center gap-1.5 px-3 py-1.5 hover:underline cursor-pointer">
+                //     <span onClick={onResetFilters} className="text-xs font-medium text-accent whitespace-nowrap">
+                //         Clear Filters ({activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} )
+                //     </span>
+
+                // </div>
+            )} */}
             <div className="relative flex-1 md:flex-none">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 <Input
                     ref={inputRef}
-
                     type="text"
                     placeholder="Search listings..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="pl-10 h-10 w-full md:w-80 text-sm shadow-md"
+                    className="pl-10 pr-10 h-10 w-full md:w-80 text-sm shadow-md"
                     disabled={isLoading}
                 />
+                {query && (
+                    <button
+                        type="button"
+                        onClick={handleClear}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 hover:text-slate-600 focus:outline-none focus:text-slate-600 transition-colors"
+                        aria-label="Clear search"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                )}
             </div>
+
             <Button
                 onClick={handleSearch}
                 disabled={isLoading}

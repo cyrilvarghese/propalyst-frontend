@@ -14,10 +14,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import CREAListingsTable from '../../whatsapp-obs/components/CREAListingsTable'
 import SearchInput, { SearchBar } from './SearchInput'
-import { useWhatsAppListings } from '../hooks/useWhatsAppListings'
-import { usePagination } from '../hooks/usePagination'
+import { useChunkedPagination } from '../hooks/useChunkedPagination'
 import { useListingsFilters } from '../hooks/useListingsFilters'
 import { useListingConverter } from '../hooks/useListingConverter'
+import { searchWhatsAppListingsByMessage, WhatsAppListing } from '@/lib/api/whatsapp-listings'
 
 // High-end residential property background images
 const BACKGROUND_IMAGES = [
@@ -32,8 +32,6 @@ const BACKGROUND_IMAGES = [
     'https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=2070',
     'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070',
 ]
-
-const PAGE_SIZE = 200 // Records per page
 
 export default function ListingsContent() {
     const router = useRouter()
@@ -50,18 +48,43 @@ export default function ListingsContent() {
     const initialExactMatch = searchParams.get('exactMatch') === 'true'
     const leadId = searchParams.get('lead_id') || ''
 
-    // API calls and data fetching
+    // Batch fetcher function for chunked pagination
+    const fetchBatch = useCallback(async (
+        offset: number,
+        limit: number,
+        query?: string,
+        propertyType?: string,
+        messageType?: string
+    ): Promise<{ data: WhatsAppListing[], count: number }> => {
+        const response = await searchWhatsAppListingsByMessage(
+            query || '',
+            limit,
+            offset,
+            propertyType,
+            messageType
+        )
+        return {
+            data: response.data,
+            count: response.count
+        }
+    }, [])
+
+    // Chunked pagination - fetches 1000 records, shows 200 per page
     const {
-        listings: rawListings,
-        totalCount,
+        currentPageListings: rawListings,
         isLoading,
         error,
-        offset,
-        search,
-        loadPage,
+        isLoadingNextBatch,
+        hasNext,
+        hasPrevious,
+        startIndex,
+        endIndex,
+        goToNext,
+        goToPrevious,
+        goToPage,
         reset: resetListings
-    } = useWhatsAppListings({
-        pageSize: PAGE_SIZE,
+    } = useChunkedPagination({
+        fetchBatch,
         initialQuery: initialSearch,
         initialPropertyType: initialPropertyType,
         initialMessageType: initialMessageType
@@ -80,6 +103,17 @@ export default function ListingsContent() {
         applyFilters,
         hasActiveFilters
     } = useListingsFilters()
+
+    // Calculate active filter count
+    const activeFilterCount = useMemo(() => {
+        let count = 0
+        if (initialPropertyType && initialPropertyType !== 'all') count++
+        if (initialMessageType && initialMessageType !== 'all') count++
+        if (filters.location?.trim()) count++
+        if (filters.agent?.trim()) count++
+        if (filters.bedroomCount && filters.bedroomCount !== 'all') count++
+        return count
+    }, [initialPropertyType, initialMessageType, filters.location, filters.agent, filters.bedroomCount])
 
     // Update URL params when filters or search change
     const updateURLParams = useCallback((updates: {
@@ -163,80 +197,43 @@ export default function ListingsContent() {
         return convertListings(filteredListings)
     }, [filteredListings, convertListings])
 
-    // Pagination logic - totalCount is optional since we don't always know the total
-    // Always allow "Next" - API will return empty results if there are no more pages
-    const pagination = usePagination({
-        pageSize: PAGE_SIZE,
-        totalCount: undefined, // Don't rely on totalCount
-        initialOffset: 0
-    })
-
-    // Sync pagination offset with API calls
-    useEffect(() => {
-        if (pagination.offset !== offset) {
-            loadPage(pagination.offset)
-        }
-    }, [pagination.offset, offset, loadPage])
-
-    // Initial load - use URL params if exist, otherwise empty
-    useEffect(() => {
-        if (initialSearch || initialPropertyType || initialMessageType) {
-            search(
-                initialSearch,
-                initialPropertyType || undefined,
-                initialMessageType || undefined
-            )
-        } else {
-            search('', undefined, undefined)
-        }
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-    // Handle search - update URL params and trigger API call
+    // Handle search - update URL params and trigger reset
     const handleSearch = useCallback(async (query: string, propertyType?: string, messageType?: string) => {
-        pagination.goToPage(1) // Reset to first page
+        goToPage(1) // Reset to first page
         updateURLParams({
             query: query,
             property_type: propertyType,
             message_type: messageType
         })
-        await search(query, propertyType, messageType)
-    }, [pagination, search, updateURLParams])
-
-    // Handle pagination navigation
-    const handleNext = async () => {
-        pagination.goToNext()
-    }
-
-    const handlePrevious = async () => {
-        pagination.goToPrevious()
-    }
+        await resetListings(query, propertyType, messageType)
+    }, [goToPage, resetListings, updateURLParams])
 
     // Handle filter changes (reset to first page when filters change and update URL)
     const handleLocationFilter = useCallback((location: string) => {
         setLocation(location)
         updateURLParams({ location })
-        pagination.goToPage(1)
-    }, [setLocation, updateURLParams, pagination])
+        goToPage(1)
+    }, [setLocation, updateURLParams, goToPage])
 
     const handleAgentFilter = useCallback((agent: string) => {
         setAgent(agent)
         updateURLParams({ agent })
-        pagination.goToPage(1)
-    }, [setAgent, updateURLParams, pagination])
+        goToPage(1)
+    }, [setAgent, updateURLParams, goToPage])
 
     const handleBedroomCountFilter = useCallback((bedroomCount: string) => {
         setBedroomCount(bedroomCount)
         updateURLParams({ bedrooms: bedroomCount })
-        pagination.goToPage(1)
-    }, [setBedroomCount, updateURLParams, pagination])
+        goToPage(1)
+    }, [setBedroomCount, updateURLParams, goToPage])
 
     const handleExactMatchToggle = useCallback((exact: boolean) => {
         setExactMatch(exact)
         updateURLParams({ exactMatch: exact })
-        pagination.goToPage(1)
-    }, [setExactMatch, updateURLParams, pagination])
+        goToPage(1)
+    }, [setExactMatch, updateURLParams, goToPage])
 
-    const handleResetFilters = useCallback(() => {
+    const handleResetFilters = useCallback(async () => {
         resetFilters()
         updateURLParams({
             location: '',
@@ -246,10 +243,10 @@ export default function ListingsContent() {
             property_type: '',
             message_type: ''
         })
-        pagination.goToPage(1)
+        goToPage(1)
         // Also reset server-side filters by triggering a new search
-        search('', undefined, undefined)
-    }, [resetFilters, updateURLParams, pagination, search])
+        await resetListings('', '', '')
+    }, [resetFilters, updateURLParams, goToPage, resetListings])
 
     const backgroundImage = BACKGROUND_IMAGES[0]
 
@@ -286,7 +283,7 @@ export default function ListingsContent() {
                             <button
                                 onClick={() => {
                                     if (error) {
-                                        search('')
+                                        resetListings(initialSearch, initialPropertyType || undefined, initialMessageType || undefined)
                                     }
                                 }}
                                 className="mt-2 text-red-600 hover:text-red-800 underline text-sm"
@@ -322,6 +319,8 @@ export default function ListingsContent() {
                                     onSearch={(query) => handleSearch(query, initialPropertyType || undefined, initialMessageType || undefined)}
                                     isLoading={isLoading}
                                     initialValue={initialSearch}
+                                    activeFilterCount={activeFilterCount}
+                                    onResetFilters={handleResetFilters}
                                 />
                             </div>
                         </div>
@@ -343,6 +342,7 @@ export default function ListingsContent() {
                                 initialLocation={initialLocation}
                                 initialAgent={initialAgent}
                                 initialBedrooms={initialBedrooms}
+                                onResetFilters={handleResetFilters}
                             />
                         </div>
                     </div>
@@ -355,6 +355,9 @@ export default function ListingsContent() {
                                 <h3 className="text-xl font-semibold text-gray-700 mb-2">
                                     Loading listings...
                                 </h3>
+                                {isLoadingNextBatch && (
+                                    <p className="text-sm text-gray-500">Loading more results in the background...</p>
+                                )}
                             </div>
                         )}
 
@@ -373,12 +376,12 @@ export default function ListingsContent() {
                                     onExactMatchToggle={handleExactMatchToggle}
                                     onResetFilters={handleResetFilters}
                                     // Pagination props
-                                    onPrevious={handlePrevious}
-                                    onNext={handleNext}
-                                    hasPrevious={pagination.hasPrevious}
-                                    hasNext={pagination.hasNext}
-                                    startIndex={pagination.startIndex}
-                                    endIndex={pagination.startIndex + filteredListings.length}
+                                    onPrevious={goToPrevious}
+                                    onNext={goToNext}
+                                    hasPrevious={hasPrevious}
+                                    hasNext={hasNext}
+                                    startIndex={startIndex}
+                                    endIndex={endIndex}
                                     totalCount={0} // Don't show "of X" since total count is unknown
                                 />
                             </div>
