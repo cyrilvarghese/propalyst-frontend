@@ -10,6 +10,7 @@
 
 import { useEffect, useMemo, useRef, useCallback } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import CREAListingsTable from '../../whatsapp-obs/components/CREAListingsTable'
@@ -103,17 +104,6 @@ export default function ListingsContent() {
         applyFilters,
         hasActiveFilters
     } = useListingsFilters()
-
-    // Calculate active filter count
-    const activeFilterCount = useMemo(() => {
-        let count = 0
-        if (initialPropertyType && initialPropertyType !== 'all') count++
-        if (initialMessageType && initialMessageType !== 'all') count++
-        if (filters.location?.trim()) count++
-        if (filters.agent?.trim()) count++
-        if (filters.bedroomCount && filters.bedroomCount !== 'all') count++
-        return count
-    }, [initialPropertyType, initialMessageType, filters.location, filters.agent, filters.bedroomCount])
 
     // Update URL params when filters or search change
     const updateURLParams = useCallback((updates: {
@@ -233,21 +223,6 @@ export default function ListingsContent() {
         goToPage(1)
     }, [setExactMatch, updateURLParams, goToPage])
 
-    const handleResetFilters = useCallback(async () => {
-        resetFilters()
-        updateURLParams({
-            location: '',
-            agent: '',
-            bedrooms: '',
-            exactMatch: false,
-            property_type: '',
-            message_type: ''
-        })
-        goToPage(1)
-        // Also reset server-side filters by triggering a new search
-        await resetListings('', '', '')
-    }, [resetFilters, updateURLParams, goToPage, resetListings])
-
     const backgroundImage = BACKGROUND_IMAGES[0]
 
     return (
@@ -298,29 +273,27 @@ export default function ListingsContent() {
                 <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 mb-6 flex-1 flex flex-col min-h-0">
                     <div className="p-4 pb-0 flex-shrink-0">
                         {/* Table Title and Search Bar */}
+
                         <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
-                            <h2 className="text-xl font-semibold text-slate-800">
-                                {initialSearch ? (
-                                    `Search: "${initialSearch}"`
-                                ) : (
-                                    <div className="relative h-10 w-48 md:h-12 md:w-64">
-                                        <Image
-                                            src="/propalyst-mls-logo.png"
-                                            alt="Propalyst MLS"
-                                            fill
-                                            className="object-contain object-left"
-                                            priority
-                                        />
-                                    </div>
-                                )}
-                            </h2>
+                            <a
+                                href="/search"
+                                className="inline-block hover:opacity-80 transition-opacity cursor-pointer"
+                            >
+                                <div className="relative h-8 w-36 md:h-10 md:w-48">
+                                    <Image
+                                        src="/propalyst-mls-logo.png"
+                                        alt="Propalyst MLS"
+                                        fill
+                                        className="object-contain object-left"
+                                        priority
+                                    />
+                                </div>
+                            </a>
                             <div className="w-full md:w-auto">
                                 <SearchBar
                                     onSearch={(query) => handleSearch(query, initialPropertyType || undefined, initialMessageType || undefined)}
                                     isLoading={isLoading}
                                     initialValue={initialSearch}
-                                    activeFilterCount={activeFilterCount}
-                                    onResetFilters={handleResetFilters}
                                 />
                             </div>
                         </div>
@@ -342,7 +315,6 @@ export default function ListingsContent() {
                                 initialLocation={initialLocation}
                                 initialAgent={initialAgent}
                                 initialBedrooms={initialBedrooms}
-                                onResetFilters={handleResetFilters}
                             />
                         </div>
                     </div>
@@ -374,7 +346,6 @@ export default function ListingsContent() {
                                     bedroomCountFilter={filters.bedroomCount}
                                     exactMatch={filters.exactMatch}
                                     onExactMatchToggle={handleExactMatchToggle}
-                                    onResetFilters={handleResetFilters}
                                     // Pagination props
                                     onPrevious={goToPrevious}
                                     onNext={goToNext}
