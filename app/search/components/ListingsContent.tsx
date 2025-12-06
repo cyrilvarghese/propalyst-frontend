@@ -8,17 +8,19 @@
 
 'use client'
 
-import { useEffect, useMemo, useRef, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import CREAListingsTable from '../../whatsapp-obs/components/CREAListingsTable'
+import RBPropertiesTable from './RBPropertiesTable'
 import SearchInput, { SearchBar } from './SearchInput'
 import { useChunkedPagination } from '../hooks/useChunkedPagination'
 import { useListingsFilters } from '../hooks/useListingsFilters'
 import { useListingConverter } from '../hooks/useListingConverter'
-import { searchWhatsAppListingsByMessage, WhatsAppListing } from '@/lib/api/whatsapp-listings'
+import { searchWhatsAppListingsByMessage, WhatsAppListing, RBProperty } from '@/lib/api/whatsapp-listings'
 
 // High-end residential property background images
 const BACKGROUND_IMAGES = [
@@ -49,6 +51,10 @@ export default function ListingsContent() {
     const initialExactMatch = searchParams.get('exactMatch') === 'true'
     const leadId = searchParams.get('lead_id') || ''
 
+    // Store RB properties and counts from API response
+    const [rbProperties, setRbProperties] = useState<RBProperty[]>([])
+    const [counts, setCounts] = useState<{ whatsapp: number; properties: number }>({ whatsapp: 0, properties: 0 })
+
     // Batch fetcher function for chunked pagination
     const fetchBatch = useCallback(async (
         offset: number,
@@ -64,9 +70,18 @@ export default function ListingsContent() {
             propertyType,
             messageType
         )
+
+        // Store RB properties and counts from the response
+        // For offset 0, replace all. For other offsets, append (though RB properties typically won't paginate)
+        if (offset === 0) {
+            setRbProperties(response.rb_properties)
+            setCounts(response.counts)
+        }
+
+        // Extract whatsapp_listings for pagination (return as 'data' for compatibility with useChunkedPagination)
         return {
-            data: response.data,
-            count: response.count
+            data: response.whatsapp_listings,
+            count: response.counts.whatsapp
         }
     }, [])
 
@@ -270,7 +285,7 @@ export default function ListingsContent() {
                 )}
 
                 {/* Combined Search and Table Card */}
-                <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 mb-6 flex-1 flex flex-col min-h-0">
+                <Card className="bg-gray-200 backdrop-blur-xl shadow-lg border border-white/20 mb-6 flex-1 flex flex-col min-h-0">
                     <div className="p-4 pb-0 flex-shrink-0">
                         {/* Table Title and Search Bar */}
 
@@ -333,29 +348,52 @@ export default function ListingsContent() {
                             </div>
                         )}
 
-                        {/* Listings Table */}
+                        {/* Tabs for WhatsApp Listings and RB Properties */}
                         {!isLoading && (
-                            <div className="flex-1 min-h-0 overflow-hidden">
-                                <CREAListingsTable
-                                    listings={convertedListings}
-                                    onLocationFilter={handleLocationFilter}
-                                    locationFilter={filters.location}
-                                    onAgentFilter={handleAgentFilter}
-                                    agentFilter={filters.agent}
-                                    onBedroomCountFilter={handleBedroomCountFilter}
-                                    bedroomCountFilter={filters.bedroomCount}
-                                    exactMatch={filters.exactMatch}
-                                    onExactMatchToggle={handleExactMatchToggle}
-                                    // Pagination props
-                                    onPrevious={goToPrevious}
-                                    onNext={goToNext}
-                                    hasPrevious={hasPrevious}
-                                    hasNext={hasNext}
-                                    startIndex={startIndex}
-                                    endIndex={endIndex}
-                                    totalCount={0} // Don't show "of X" since total count is unknown
-                                />
-                            </div>
+                            <Tabs defaultValue="whatsapp" className="flex-1 flex flex-col min-h-0">
+                                <TabsList className="mb-0 justify-start rounded-none bg-transparent border-b border-gray-200 h-auto p-0">
+                                    <TabsTrigger
+                                        value="whatsapp"
+                                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                    >
+                                        Regular Listings ({counts.whatsapp})
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="properties"
+                                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                    >
+                                        Verified RB Listings ({counts.properties})
+                                    </TabsTrigger>
+                                </TabsList>
+
+                                {/* WhatsApp Listings Tab */}
+                                <TabsContent value="whatsapp" className="flex-1 min-h-0 overflow-hidden mt-0">
+                                    <CREAListingsTable
+                                        listings={convertedListings}
+                                        onLocationFilter={handleLocationFilter}
+                                        locationFilter={filters.location}
+                                        onAgentFilter={handleAgentFilter}
+                                        agentFilter={filters.agent}
+                                        onBedroomCountFilter={handleBedroomCountFilter}
+                                        bedroomCountFilter={filters.bedroomCount}
+                                        exactMatch={filters.exactMatch}
+                                        onExactMatchToggle={handleExactMatchToggle}
+                                        // Pagination props
+                                        onPrevious={goToPrevious}
+                                        onNext={goToNext}
+                                        hasPrevious={hasPrevious}
+                                        hasNext={hasNext}
+                                        startIndex={startIndex}
+                                        endIndex={endIndex}
+                                        totalCount={0} // Don't show "of X" since total count is unknown
+                                    />
+                                </TabsContent>
+
+                                {/* RB Properties Tab */}
+                                <TabsContent value="properties" className="flex-1 min-h-0 overflow-hidden mt-0">
+                                    <RBPropertiesTable properties={rbProperties} />
+                                </TabsContent>
+                            </Tabs>
                         )}
                     </div>
                 </Card>

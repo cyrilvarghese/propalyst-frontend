@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { searchWhatsAppListingsByMessage, WhatsAppListing, WhatsAppListingsResponse } from '@/lib/api/whatsapp-listings'
+import { searchWhatsAppListingsByMessage, WhatsAppListing, ListingResponse } from '@/lib/api/whatsapp-listings'
 
 interface UseWhatsAppListingsOptions {
     pageSize?: number
@@ -78,8 +78,9 @@ export function useWhatsAppListings(
             )
 
             if (!abortController.signal.aborted) {
-                setListings(response.data)
-                setTotalCount(response.count)
+                // Extract whatsapp_listings from the new response structure
+                setListings(response.whatsapp_listings)
+                setTotalCount(response.counts?.whatsapp || 0)
                 setOffset(newOffset)
                 setCurrentQuery(query)
                 if (propertyType !== undefined) setCurrentPropertyType(propertyType || '')

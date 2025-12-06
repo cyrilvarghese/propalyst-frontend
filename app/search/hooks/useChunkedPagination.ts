@@ -53,15 +53,15 @@ export function useChunkedPagination(
     const [error, setError] = useState<string | null>(null)
     const [isLoadingNextBatch, setIsLoadingNextBatch] = useState(false)
     const [currentLocalPage, setCurrentLocalPage] = useState(1)
-    
+
     // Track which batches have been fetched to avoid duplicates
     const fetchedOffsets = useRef<Set<number>>(new Set())
-    
+
     // Current search parameters
     const [currentQuery, setCurrentQuery] = useState(initialQuery)
     const [currentPropertyType, setCurrentPropertyType] = useState(initialPropertyType)
     const [currentMessageType, setCurrentMessageType] = useState(initialMessageType)
-    
+
     // Track if we're currently fetching to prevent race conditions
     const isFetchingRef = useRef(false)
     const abortControllerRef = useRef<AbortController | null>(null)
@@ -233,7 +233,7 @@ export function useChunkedPagination(
         if (query !== undefined) setCurrentQuery(query)
         if (propertyType !== undefined) setCurrentPropertyType(propertyType)
         if (messageType !== undefined) setCurrentMessageType(messageType)
-        
+
         // Reset state
         setAllListings([])
         setCurrentLocalPage(1)

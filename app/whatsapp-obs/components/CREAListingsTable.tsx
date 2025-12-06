@@ -8,7 +8,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
     Table,
     TableBody,
@@ -107,7 +107,9 @@ export default function CREAListingsTable({
 
     // Format date (without year and time)
     const formatDate = (dateString: string): string => {
+        if (!dateString) return 'N/A'
         const date = new Date(dateString)
+        if (isNaN(date.getTime())) return 'N/A'
         return date.toLocaleDateString('en-IN', {
             month: 'short',
             day: 'numeric',
@@ -200,8 +202,8 @@ export default function CREAListingsTable({
                                 </TableRow>
                             ) : (
                                 paginatedListings.map((listing) => (
-                                    <>
-                                        <TableRow key={listing.id} className="group hover:bg-slate-50 transition-colors border-b border-gray-100">
+                                    <React.Fragment key={listing.id}>
+                                        <TableRow className="group hover:bg-slate-50 transition-colors border-b border-gray-100">
                                             <TableCell className="align-top py-3">
                                                 <p className="text-sm text-slate-900 font-medium">
                                                     {formatDate(listing.message_date)}
@@ -360,7 +362,7 @@ export default function CREAListingsTable({
                                                 </TableCell>
                                             </TableRow>
                                         )}
-                                    </>
+                                    </React.Fragment>
                                 ))
                             )}
                         </TableBody>
