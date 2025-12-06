@@ -11,7 +11,6 @@ import { useState, useEffect, useTransition, useCallback, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { searchCREAListings, fetchCREAListings, searchCREAListingsCombined } from '@/lib/api/crea-listings'
 import CREAListingsTable from './CREAListingsTable'
-import SearchInput from './SearchInput'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
@@ -209,7 +208,6 @@ export default function ListingsContent() {
                 </div>
                 {/* Search Input */}
                 <Card className="bg-white/95 backdrop-blur-xl shadow-lg border border-white/20 p-4 mb-6">
-                    <SearchInput onSearch={handleSearch} isLoading={isLoading || isPending} />
                 </Card>
 
                 {/* Results header */}
