@@ -250,17 +250,12 @@ export default function CREAListingsTable({
                                             </TableCell>
                                             <TableCell className="align-top py-2">
                                                 {listing.configuration ? (
-                                                    (() => {
-                                                        const badgeColors = getBedroomBadgeColor(listing.configuration)
-                                                        return (
-                                                            <Badge
-                                                                variant="secondary"
-                                                                className={`text-xs border ${badgeColors.bg} ${badgeColors.text}`}
-                                                            >
-                                                                {listing.configuration}
-                                                            </Badge>
-                                                        )
-                                                    })()
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="text-xs border bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
+                                                    >
+                                                        {listing.configuration}
+                                                    </Badge>
                                                 ) : (
                                                     <span className="text-xs text-slate-400">N/A</span>
                                                 )}

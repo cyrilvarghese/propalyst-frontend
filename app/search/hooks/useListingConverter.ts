@@ -21,7 +21,7 @@ export function useListingConverter() {
             listing_type: listing.message_type,
             transaction_type: listing.message_type,
             property_type: listing.property_type || '',
-            configuration: listing.bedroom_count ? `${listing.bedroom_count}BHK` : null,
+            configuration: listing.bedrooms ? `${listing.bedrooms}BHK` : null,
             size_sqft: listing.area_sqft || 0,
             price: listing.price || 0,
             price_text: listing.price_text || '',

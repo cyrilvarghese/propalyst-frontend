@@ -88,6 +88,7 @@ export default function ListingsContent() {
     // Chunked pagination - fetches 1000 records, shows 200 per page
     const {
         currentPageListings: rawListings,
+        allListings, // All accumulated listings for client-side filtering
         isLoading,
         error,
         isLoadingNextBatch,
@@ -117,6 +118,7 @@ export default function ListingsContent() {
         setExactMatch,
         resetFilters,
         applyFilters,
+        applyFiltersToRBProperties,
         hasActiveFilters
     } = useListingsFilters()
 
@@ -192,15 +194,33 @@ export default function ListingsContent() {
     // Convert listings format
     const { convertListings } = useListingConverter()
 
-    // Apply filters to raw listings
+    // Apply filters to ALL listings (not just current page)
+    const filteredAllListings = useMemo(() => {
+        return applyFilters(allListings)
+    }, [allListings, applyFilters])
+
+    // Paginate the filtered results manually
     const filteredListings = useMemo(() => {
-        return applyFilters(rawListings)
-    }, [rawListings, applyFilters])
+        const start = startIndex
+        const end = startIndex + 200 // LOCAL_PAGE_SIZE
+        return filteredAllListings.slice(start, end)
+    }, [filteredAllListings, startIndex])
 
     // Convert to CREA format
     const convertedListings = useMemo(() => {
         return convertListings(filteredListings)
     }, [filteredListings, convertListings])
+
+    // Apply filters to RB Properties
+    const filteredRBProperties = useMemo(() => {
+        return applyFiltersToRBProperties(rbProperties)
+    }, [rbProperties, applyFiltersToRBProperties])
+
+    // Update counts based on filtered results (post local + server filters)
+    const filteredCounts = useMemo(() => ({
+        whatsapp: filteredAllListings.length,
+        properties: filteredRBProperties.length
+    }), [filteredAllListings.length, filteredRBProperties.length])
 
     // Handle search - update URL params and trigger reset
     const handleSearch = useCallback(async (query: string, propertyType?: string, messageType?: string) => {
@@ -356,13 +376,13 @@ export default function ListingsContent() {
                                         value="whatsapp"
                                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                                     >
-                                        Regular Listings ({counts.whatsapp})
+                                        Regular Listings ({filteredCounts.whatsapp})
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="properties"
                                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                                     >
-                                        Verified RB Listings ({counts.properties})
+                                        Verified RB Listings ({filteredCounts.properties})
                                     </TabsTrigger>
                                 </TabsList>
 
@@ -391,7 +411,7 @@ export default function ListingsContent() {
 
                                 {/* RB Properties Tab */}
                                 <TabsContent value="properties" className="flex-1 min-h-0 overflow-hidden mt-0">
-                                    <RBPropertiesTable properties={rbProperties} />
+                                    <RBPropertiesTable properties={filteredRBProperties} />
                                 </TabsContent>
                             </Tabs>
                         )}

@@ -19,7 +19,7 @@ export interface WhatsAppListing {
     message_type: string
     property_type: string | null
     area_sqft: number | null
-    bedroom_count: number | null
+    bedrooms: number | null // Changed from bedroom_count to match API response
     price: number | null
     price_text: string | null
     location: string | null

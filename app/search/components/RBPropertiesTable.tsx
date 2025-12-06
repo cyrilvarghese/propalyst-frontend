@@ -26,7 +26,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
     Table,
     TableBody,
@@ -152,8 +152,8 @@ export default function RBPropertiesTable({
                                 </TableRow>
                             ) : (
                                 properties.map((property) => (
-                                    <>
-                                        <TableRow key={property.id} className="group hover:bg-slate-50 transition-colors border-b border-gray-100">
+                                    <React.Fragment key={property.id}>
+                                        <TableRow className="group hover:bg-slate-50 transition-colors border-b border-gray-100">
                                             {/* Date - created_at field (same as WhatsApp) */}
                                             <TableCell className="align-top py-3">
                                                 <p className="text-sm text-slate-900 font-medium">
@@ -358,7 +358,7 @@ export default function RBPropertiesTable({
                                                 </TableCell>
                                             </TableRow>
                                         )}
-                                    </>
+                                    </React.Fragment>
                                 ))
                             )}
                         </TableBody>
