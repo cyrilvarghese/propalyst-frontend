@@ -422,18 +422,18 @@ export default function ListingsContent() {
                         {/* Tabs for WhatsApp Listings and RB Properties */}
                         {!isLoading && (
                             <Tabs defaultValue="whatsapp" className="flex-1 flex flex-col min-h-0">
-                                <TabsList className="mb-0 justify-start rounded-none bg-transparent border-b border-gray-200 h-auto p-0">
+                                <TabsList className="mb-0 justify-start rounded-none bg-transparent border-b border-gray-200 h-auto p-0 w-full overflow-hidden">
                                     <TabsTrigger
                                         value="whatsapp"
-                                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs sm:text-sm px-2 sm:px-4 whitespace-nowrap"
                                     >
-                                        Regular Listings<span className="hidden sm:inline"> ({filteredCounts.whatsapp})</span>
+                                        Regular Listings({filteredCounts.whatsapp})
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="properties"
-                                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs sm:text-sm px-2 sm:px-4 whitespace-nowrap"
                                     >
-                                        Verified RB Listings<span className="hidden sm:inline"> ({filteredCounts.properties})</span>
+                                        Verified RB Listings({filteredCounts.properties})
                                     </TabsTrigger>
                                 </TabsList>
 
