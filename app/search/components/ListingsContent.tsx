@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import CREAListingsTable from '../../whatsapp-obs/components/CREAListingsTable'
 import RBPropertiesTable from './RBPropertiesTable'
 import SearchInput, { SearchBar } from './SearchInput'
+import JoinGroupMessage from './JoinGroupMessage'
 import { useChunkedPagination } from '../hooks/useChunkedPagination'
 import { useListingsFilters } from '../hooks/useListingsFilters'
 import { useListingConverter } from '../hooks/useListingConverter'
@@ -403,6 +404,8 @@ export default function ListingsContent() {
                                 initialMaxPrice={initialMaxPrice}
                             />
                         </div>
+
+                        <JoinGroupMessage />
                     </div>
 
                     <div className="px-4 pb-4 flex-1 flex flex-col min-h-0 md:overflow-hidden">
