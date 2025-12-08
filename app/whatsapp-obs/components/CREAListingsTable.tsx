@@ -37,7 +37,7 @@ import {
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import TableHeaderWithFilters from './TableHeaderWithFilters'
 import WhatsAppMessagePopover from './WhatsAppMessagePopover'
-import WhatsAppMessageDialog from './WhatsAppMessageDialog'
+import WhatsAppLinkButton from './WhatsAppLinkButton'
 import Pagination from './Pagination'
 import CopyDebugSQLButton from './CopyDebugSQLButton'
 import CompareListingButton from './CompareListingButton'
@@ -224,13 +224,13 @@ export default function CREAListingsTable({
                                                                 const cleanContact = contact.trim()
                                                                 if (!cleanContact) return null
                                                                 return (
-                                                                    <WhatsAppMessageDialog key={index} listing={listing} initialPhoneNumber={cleanContact}>
+                                                                    <WhatsAppLinkButton key={index} listing={listing} initialPhoneNumber={cleanContact}>
                                                                         <button
                                                                             className="text-xs text-slate-600 hover:text-slate-900 hover:underline inline-flex items-center gap-1 cursor-pointer"
                                                                         >
                                                                             <Phone className="w-3 h-3" /> ({cleanContact})
                                                                         </button>
-                                                                    </WhatsAppMessageDialog>
+                                                                    </WhatsAppLinkButton>
                                                                 )
                                                             })}
                                                         </div>
@@ -447,12 +447,12 @@ export default function CREAListingsTable({
                                     </div>
                                 </div>
                                 {listing.agent_contact && (
-                                    <WhatsAppMessageDialog listing={listing}>
+                                    <WhatsAppLinkButton listing={listing}>
                                         <Button size="sm" variant="outline" className="h-9 px-4 text-xs font-medium border-slate-200 text-slate-700 bg-white hover:bg-white hover:text-slate-700 gap-2 transition-none">
                                             <MessageSquare className="w-3.5 h-3.5" />
                                             Contact
                                         </Button>
-                                    </WhatsAppMessageDialog>
+                                    </WhatsAppLinkButton>
                                 )}
                             </div>
 
