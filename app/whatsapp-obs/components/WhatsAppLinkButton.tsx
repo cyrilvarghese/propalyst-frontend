@@ -49,7 +49,7 @@ export default function WhatsAppLinkButton({ listing, initialPhoneNumber, childr
 
         // Get raw message from listing and prepend greeting
         const rawMessage = listing.raw_message || ''
-        const messageWithGreeting = `Hi - I saw this message on https://MLS.propalyst.com\n\n${rawMessage}`
+        const messageWithGreeting = `Hi - I saw this message on https://mls.propalyst.com\n\n${rawMessage}`
 
         // Format and encode
         const formattedPhone = formatPhoneForWhatsApp(phoneNumber)
