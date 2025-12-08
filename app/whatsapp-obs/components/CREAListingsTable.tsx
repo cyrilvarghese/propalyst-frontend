@@ -9,6 +9,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
     Table,
     TableBody,
@@ -30,7 +31,8 @@ import {
     CheckCircle2,
     Compass,
     Armchair,
-    Car
+    Car,
+    MessageSquare
 } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import TableHeaderWithFilters from './TableHeaderWithFilters'
@@ -86,6 +88,8 @@ export default function CREAListingsTable({
     endIndex = listings.length,
     totalCount = listings.length
 }: CREAListingsTableProps) {
+    const searchParams = useSearchParams()
+    const isDebugMode = searchParams.get('debug') === 'true'
     const [expandedRow, setExpandedRow] = useState<string | null>(null)
 
     // Use all listings as-is (already paginated by parent)
@@ -347,12 +351,13 @@ export default function CREAListingsTable({
                                                         <div className="text-sm text-slate-700 whitespace-pre-wrap break-words border-t border-slate-200 pt-3 leading-relaxed">
                                                             {listing.raw_message}
                                                         </div>
-                                                        <div className="flex gap-2 flex-wrap">
-
-                                                            <RetryListingButton listing={listing} />
-                                                            <CopyDebugSQLButton listing={listing} />
-                                                            <CompareListingButton listing={listing} />
-                                                        </div>
+                                                        {isDebugMode && (
+                                                            <div className="flex gap-2 flex-wrap">
+                                                                <RetryListingButton listing={listing} />
+                                                                <CopyDebugSQLButton listing={listing} />
+                                                                <CompareListingButton listing={listing} />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -444,8 +449,8 @@ export default function CREAListingsTable({
                                 {listing.agent_contact && (
                                     <WhatsAppMessageDialog listing={listing}>
                                         <Button size="sm" variant="outline" className="h-9 px-4 text-xs font-medium border-slate-200 text-slate-700 bg-white hover:bg-white hover:text-slate-700 gap-2 transition-none">
-                                            <Phone className="w-3.5 h-3.5" />
-                                            Call
+                                            <MessageSquare className="w-3.5 h-3.5" />
+                                            Contact
                                         </Button>
                                     </WhatsAppMessageDialog>
                                 )}
