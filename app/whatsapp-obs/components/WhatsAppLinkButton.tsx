@@ -47,12 +47,13 @@ export default function WhatsAppLinkButton({ listing, initialPhoneNumber, childr
             return
         }
 
-        // Get raw message from listing
+        // Get raw message from listing and prepend greeting
         const rawMessage = listing.raw_message || ''
+        const messageWithGreeting = `Hi - I saw this message on https://MLS.propalyst.com\n\n${rawMessage}`
 
         // Format and encode
         const formattedPhone = formatPhoneForWhatsApp(phoneNumber)
-        const encodedMessage = encodeURIComponent(rawMessage)
+        const encodedMessage = encodeURIComponent(messageWithGreeting)
         const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodedMessage}`
 
         // Open WhatsApp
