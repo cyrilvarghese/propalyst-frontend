@@ -462,7 +462,7 @@ export default function CREAListingsTable({
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="w-full text-xs font-medium text-blue-500 h-9 bg-transparent hover:bg-transparent text-black hover:text-black border-none shadow-none transition-none"
+                                        className="w-full text-xs font-medium text-blue-500 h-9 bg-transparent hover:bg-transparent hover:text-black border-none shadow-none transition-none"
                                         onClick={() => toggleRow(listing.id)}
                                     >
                                         {expandedRow === listing.id ? 'Hide Details' : 'View Details'}
