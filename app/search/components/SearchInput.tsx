@@ -133,14 +133,14 @@ export default function SearchInput({
     }, [maxPriceFilter])
 
     const handleSearch = () => {
-        const searchPropertyType = propertyType === 'all' ? undefined : propertyType
-        const searchMessageType = messageType === 'all' ? undefined : messageType
+        const searchPropertyType = propertyType === 'all' ? '' : propertyType
+        const searchMessageType = messageType === 'all' ? '' : messageType
 
         if (query.trim().length > 0 || searchPropertyType || searchMessageType) {
             onSearch(query.trim(), searchPropertyType, searchMessageType)
         } else {
             // Clear search when everything is empty
-            onSearch('', undefined, undefined)
+            onSearch('', '', '')
         }
     }
 
@@ -154,24 +154,24 @@ export default function SearchInput({
     const handlePropertyTypeChange = (value: string) => {
         setPropertyType(value)
         // Trigger search immediately when dropdown changes
-        const searchPropertyType = value === 'all' ? undefined : value
-        const searchMessageType = messageType === 'all' ? undefined : messageType
+        const searchPropertyType = value === 'all' ? '' : value
+        const searchMessageType = messageType === 'all' ? '' : messageType
         if (query.trim().length > 0 || searchPropertyType || searchMessageType) {
             onSearch(query.trim(), searchPropertyType, searchMessageType)
         } else {
-            onSearch('', undefined, undefined)
+            onSearch('', '', '')
         }
     }
 
     const handleMessageTypeChange = (value: string) => {
         setMessageType(value)
         // Trigger search immediately when dropdown changes
-        const searchPropertyType = propertyType === 'all' ? undefined : propertyType
-        const searchMessageType = value === 'all' ? undefined : value
+        const searchPropertyType = propertyType === 'all' ? '' : propertyType
+        const searchMessageType = value === 'all' ? '' : value
         if (query.trim().length > 0 || searchPropertyType || searchMessageType) {
             onSearch(query.trim(), searchPropertyType, searchMessageType)
         } else {
-            onSearch('', undefined, undefined)
+            onSearch('', '', '')
         }
     }
 
