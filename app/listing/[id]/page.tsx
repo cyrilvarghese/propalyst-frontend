@@ -10,13 +10,13 @@ import { notFound } from 'next/navigation'
 import ListingDetailContent from './ListingDetailContent'
 
 interface PageProps {
-    params: {
+    params: Promise<{
         id: string
-    }
+    }>
 }
 
 export default async function ListingDetailPage({ params }: PageProps) {
-    const { id } = params
+    const { id } = await params
 
     if (!id) {
         notFound()
