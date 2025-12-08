@@ -21,6 +21,7 @@ export const BATCH_SIZE = 900
  * This is how many records are shown to the user on each page
  */
 export const LOCAL_PAGE_SIZE = 200
+export const LOCAL_PAGE_SIZE_MOBILE = 20
 
 /**
  * Page number (within a batch) that triggers the next batch fetch

@@ -20,6 +20,7 @@ import SearchInput, { SearchBar } from './SearchInput'
 import { useChunkedPagination } from '../hooks/useChunkedPagination'
 import { useListingsFilters } from '../hooks/useListingsFilters'
 import { useListingConverter } from '../hooks/useListingConverter'
+import { LOCAL_PAGE_SIZE, LOCAL_PAGE_SIZE_MOBILE } from '../constants/pagination.constants'
 import { searchWhatsAppListingsByMessage, WhatsAppListing, RBProperty } from '@/lib/api/whatsapp-listings'
 
 // High-end residential property background images
@@ -49,11 +50,24 @@ export default function ListingsContent() {
     const initialMessageType = searchParams.get('message_type') || '' // Server-side filter
     const initialBedrooms = searchParams.get('bedrooms') || ''
     const initialExactMatch = searchParams.get('exactMatch') === 'true'
+    const initialMinPrice = searchParams.get('min_price') || ''
+    const initialMaxPrice = searchParams.get('max_price') || ''
     const leadId = searchParams.get('lead_id') || ''
 
     // Store RB properties and counts from API response
     const [rbProperties, setRbProperties] = useState<RBProperty[]>([])
     const [counts, setCounts] = useState<{ whatsapp: number; properties: number }>({ whatsapp: 0, properties: 0 })
+    const [isMobile, setIsMobile] = useState(false)
+
+    // Detect screen size for responsive page size
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
+
+    const pageSize = isMobile ? LOCAL_PAGE_SIZE_MOBILE : LOCAL_PAGE_SIZE
 
     // Batch fetcher function for chunked pagination
     const fetchBatch = useCallback(async (
@@ -116,6 +130,8 @@ export default function ListingsContent() {
         setBedroomCount,
         setTransactionType,
         setExactMatch,
+        setMinPrice,
+        setMaxPrice,
         resetFilters,
         applyFilters,
         applyFiltersToRBProperties,
@@ -132,6 +148,8 @@ export default function ListingsContent() {
         bedrooms?: string
         exactMatch?: boolean
         lead_id?: string
+        min_price?: string
+        max_price?: string
     }) => {
         if (isUpdatingURL.current) return
 
@@ -170,6 +188,14 @@ export default function ListingsContent() {
             if (updates.lead_id) params.set('lead_id', updates.lead_id)
             else params.delete('lead_id')
         }
+        if (updates.min_price !== undefined) {
+            if (updates.min_price) params.set('min_price', updates.min_price)
+            else params.delete('min_price')
+        }
+        if (updates.max_price !== undefined) {
+            if (updates.max_price) params.set('max_price', updates.max_price)
+            else params.delete('max_price')
+        }
 
         const newURL = params.toString() ? `?${params.toString()}` : ''
         router.replace(newURL, { scroll: false })
@@ -187,6 +213,8 @@ export default function ListingsContent() {
             if (initialAgent) setAgent(initialAgent)
             if (initialBedrooms) setBedroomCount(initialBedrooms)
             if (initialExactMatch) setExactMatch(true)
+            if (initialMinPrice) setMinPrice(initialMinPrice)
+            if (initialMaxPrice) setMaxPrice(initialMaxPrice)
             hasInitialized.current = true
         }
     }, []) // Only run on mount - filters are already in URL, don't update again
@@ -202,14 +230,19 @@ export default function ListingsContent() {
     // Paginate the filtered results manually
     const filteredListings = useMemo(() => {
         const start = startIndex
-        const end = startIndex + 200 // LOCAL_PAGE_SIZE
+        const end = startIndex + pageSize
         return filteredAllListings.slice(start, end)
-    }, [filteredAllListings, startIndex])
+    }, [filteredAllListings, startIndex, pageSize])
 
     // Convert to CREA format
     const convertedListings = useMemo(() => {
         return convertListings(filteredListings)
     }, [filteredListings, convertListings])
+
+    // Calculate responsive end index for pagination display
+    const responsiveEndIndex = useMemo(() => {
+        return startIndex + filteredListings.length
+    }, [startIndex, filteredListings.length])
 
     // Apply filters to RB Properties
     const filteredRBProperties = useMemo(() => {
@@ -257,6 +290,18 @@ export default function ListingsContent() {
         updateURLParams({ exactMatch: exact })
         goToPage(1)
     }, [setExactMatch, updateURLParams, goToPage])
+
+    const handleMinPriceFilter = useCallback((minPrice: string) => {
+        setMinPrice(minPrice)
+        updateURLParams({ min_price: minPrice })
+        goToPage(1)
+    }, [setMinPrice, updateURLParams, goToPage])
+
+    const handleMaxPriceFilter = useCallback((maxPrice: string) => {
+        setMaxPrice(maxPrice)
+        updateURLParams({ max_price: maxPrice })
+        goToPage(1)
+    }, [setMaxPrice, updateURLParams, goToPage])
 
     const backgroundImage = BACKGROUND_IMAGES[0]
 
@@ -347,9 +392,15 @@ export default function ListingsContent() {
                                 agentFilter={filters.agent}
                                 onBedroomCountFilter={handleBedroomCountFilter}
                                 bedroomCountFilter={filters.bedroomCount}
+                                onMinPriceFilter={handleMinPriceFilter}
+                                minPriceFilter={filters.minPrice}
+                                onMaxPriceFilter={handleMaxPriceFilter}
+                                maxPriceFilter={filters.maxPrice}
                                 initialLocation={initialLocation}
                                 initialAgent={initialAgent}
                                 initialBedrooms={initialBedrooms}
+                                initialMinPrice={initialMinPrice}
+                                initialMaxPrice={initialMaxPrice}
                             />
                         </div>
                     </div>
@@ -376,13 +427,13 @@ export default function ListingsContent() {
                                         value="whatsapp"
                                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                                     >
-                                        Regular Listings ({filteredCounts.whatsapp})
+                                        Regular Listings<span className="hidden sm:inline"> ({filteredCounts.whatsapp})</span>
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="properties"
                                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                                     >
-                                        Verified RB Listings ({filteredCounts.properties})
+                                        Verified RB Listings<span className="hidden sm:inline"> ({filteredCounts.properties})</span>
                                     </TabsTrigger>
                                 </TabsList>
 
@@ -404,7 +455,7 @@ export default function ListingsContent() {
                                         hasPrevious={hasPrevious}
                                         hasNext={hasNext}
                                         startIndex={startIndex}
-                                        endIndex={endIndex}
+                                        endIndex={responsiveEndIndex}
                                         totalCount={0} // Don't show "of X" since total count is unknown
                                     />
                                 </TabsContent>

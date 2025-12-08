@@ -34,9 +34,15 @@ interface SearchInputProps {
     agentFilter?: string
     onBedroomCountFilter?: (bedroomCount: string) => void
     bedroomCountFilter?: string
+    onMinPriceFilter?: (minPrice: string) => void
+    minPriceFilter?: string
+    onMaxPriceFilter?: (maxPrice: string) => void
+    maxPriceFilter?: string
     initialLocation?: string
     initialAgent?: string
     initialBedrooms?: string
+    initialMinPrice?: string
+    initialMaxPrice?: string
 }
 
 export default function SearchInput({
@@ -51,9 +57,15 @@ export default function SearchInput({
     agentFilter = '',
     onBedroomCountFilter,
     bedroomCountFilter = '',
+    onMinPriceFilter,
+    minPriceFilter = '',
+    onMaxPriceFilter,
+    maxPriceFilter = '',
     initialLocation = '',
     initialAgent = '',
-    initialBedrooms = ''
+    initialBedrooms = '',
+    initialMinPrice = '',
+    initialMaxPrice = ''
 }: SearchInputProps) {
     const [query, setQuery] = useState(initialValue)
     const [propertyType, setPropertyType] = useState(initialPropertyType || 'all')
@@ -61,6 +73,8 @@ export default function SearchInput({
     const [location, setLocation] = useState(initialLocation)
     const [agent, setAgent] = useState(initialAgent)
     const [bedrooms, setBedrooms] = useState(initialBedrooms || 'all')
+    const [minPrice, setMinPrice] = useState(initialMinPrice)
+    const [maxPrice, setMaxPrice] = useState(initialMaxPrice)
 
     // Update local state when initial values change (e.g., from URL params)
     useEffect(() => {
@@ -105,6 +119,18 @@ export default function SearchInput({
             setBedrooms(bedroomCountFilter || 'all')
         }
     }, [bedroomCountFilter])
+
+    useEffect(() => {
+        if (minPriceFilter !== undefined) {
+            setMinPrice(minPriceFilter)
+        }
+    }, [minPriceFilter])
+
+    useEffect(() => {
+        if (maxPriceFilter !== undefined) {
+            setMaxPrice(maxPriceFilter)
+        }
+    }, [maxPriceFilter])
 
     const handleSearch = () => {
         const searchPropertyType = propertyType === 'all' ? undefined : propertyType
@@ -167,18 +193,38 @@ export default function SearchInput({
         onBedroomCountFilter?.(bedroomValue)
     }
 
+    const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        // Allow only numbers
+        if (value === '' || /^\d*$/.test(value)) {
+            setMinPrice(value)
+            onMinPriceFilter?.(value)
+        }
+    }
+
+    const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        // Allow only numbers
+        if (value === '' || /^\d*$/.test(value)) {
+            setMaxPrice(value)
+            onMaxPriceFilter?.(value)
+        }
+    }
+
     // Check which filters are active for accent borders
     const isAgentActive = (agentFilter !== undefined ? agentFilter : agent)?.trim() || false
     const isLocationActive = (locationFilter !== undefined ? locationFilter : location)?.trim() || false
     const isPropertyTypeActive = propertyType !== 'all'
     const isMessageTypeActive = messageType !== 'all'
     const isBedroomsActive = (bedroomCountFilter !== undefined ? (bedroomCountFilter || 'all') : bedrooms) !== 'all'
+    const isMinPriceActive = (minPriceFilter !== undefined ? minPriceFilter : minPrice)?.trim() || false
+    const isMaxPriceActive = (maxPriceFilter !== undefined ? maxPriceFilter : maxPrice)?.trim() || false
 
     return (
         <div className="space-y-3">
             {/* All Filters Group */}
             <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-7 gap-4">
                     {/* Agent Filter */}
                     {onAgentFilter && (
                         <div className={cn("w-full", isAgentActive && "filter-active")}>
@@ -214,7 +260,7 @@ export default function SearchInput({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Asset Types</SelectItem>
+                                <SelectItem value="all">All Types</SelectItem>
                                 <SelectItem value="apartment">Apartment</SelectItem>
                                 <SelectItem value="villa">Villa</SelectItem>
                                 <SelectItem value="independent_house">Independent House</SelectItem>
@@ -245,7 +291,7 @@ export default function SearchInput({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All bedrooms</SelectItem>
+                                    <SelectItem value="all">All</SelectItem>
                                     <SelectItem value="1">1 BHK</SelectItem>
                                     <SelectItem value="2">2 BHK</SelectItem>
                                     <SelectItem value="3">3 BHK</SelectItem>
@@ -292,7 +338,7 @@ export default function SearchInput({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Message Types</SelectItem>
+                                <SelectItem value="all">All Types</SelectItem>
                                 <SelectItem value="supply_sale">Supply - Sale</SelectItem>
                                 <SelectItem value="supply_rent">Supply - Rent</SelectItem>
                                 <SelectItem value="demand_buy">Demand - Buy</SelectItem>
@@ -300,6 +346,45 @@ export default function SearchInput({
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {/* Price Range Filter */}
+                    {onMinPriceFilter && (
+                        <div className={cn("w-full", isMinPriceActive && "filter-active")}>
+                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">
+                                Min Price (₹)
+                            </label>
+                            <Input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="e.g. 5000000"
+                                value={minPriceFilter !== undefined ? minPriceFilter : minPrice}
+                                onChange={handleMinPriceChange}
+                                className={cn(
+                                    "h-9 text-sm w-full shadow-sm",
+                                    isMinPriceActive && "border-2 border-accent focus-visible:ring-accent"
+                                )}
+                            />
+                        </div>
+                    )}
+
+                    {onMaxPriceFilter && (
+                        <div className={cn("w-full", isMaxPriceActive && "filter-active")}>
+                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">
+                                Max Price (₹)
+                            </label>
+                            <Input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="e.g. 10000000"
+                                value={maxPriceFilter !== undefined ? maxPriceFilter : maxPrice}
+                                onChange={handleMaxPriceChange}
+                                className={cn(
+                                    "h-9 text-sm w-full shadow-sm",
+                                    isMaxPriceActive && "border-2 border-accent focus-visible:ring-accent"
+                                )}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

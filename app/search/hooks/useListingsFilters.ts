@@ -15,6 +15,8 @@ interface FilterState {
     bedroomCount: string
     transactionType: string
     exactMatch: boolean
+    minPrice: string
+    maxPrice: string
 }
 
 interface UseListingsFiltersReturn {
@@ -25,6 +27,8 @@ interface UseListingsFiltersReturn {
     setBedroomCount: (count: string) => void
     setTransactionType: (type: string) => void
     setExactMatch: (exact: boolean) => void
+    setMinPrice: (price: string) => void
+    setMaxPrice: (price: string) => void
     resetFilters: () => void
     applyFilters: (listings: WhatsAppListing[]) => WhatsAppListing[]
     applyFiltersToRBProperties: (properties: RBProperty[]) => RBProperty[]
@@ -37,7 +41,9 @@ const initialFilters: FilterState = {
     property: '',
     bedroomCount: '',
     transactionType: '',
-    exactMatch: false
+    exactMatch: false,
+    minPrice: '',
+    maxPrice: ''
 }
 
 export function useListingsFilters(): UseListingsFiltersReturn {
@@ -65,6 +71,14 @@ export function useListingsFilters(): UseListingsFiltersReturn {
 
     const setExactMatch = useCallback((exactMatch: boolean) => {
         setFilters(prev => ({ ...prev, exactMatch }))
+    }, [])
+
+    const setMinPrice = useCallback((minPrice: string) => {
+        setFilters(prev => ({ ...prev, minPrice }))
+    }, [])
+
+    const setMaxPrice = useCallback((maxPrice: string) => {
+        setFilters(prev => ({ ...prev, maxPrice }))
     }, [])
 
     const resetFilters = useCallback(() => {
@@ -113,6 +127,19 @@ export function useListingsFilters(): UseListingsFiltersReturn {
             })
         }
 
+        // Filter by price range
+        const minPriceNum = filters.minPrice ? parseFloat(filters.minPrice) : null
+        const maxPriceNum = filters.maxPrice ? parseFloat(filters.maxPrice) : null
+
+        if (minPriceNum !== null || maxPriceNum !== null) {
+            filtered = filtered.filter(listing => {
+                const price = listing.price || 0
+                if (minPriceNum !== null && price < minPriceNum) return false
+                if (maxPriceNum !== null && price > maxPriceNum) return false
+                return true
+            })
+        }
+
         return filtered
     }, [filters])
 
@@ -156,6 +183,19 @@ export function useListingsFilters(): UseListingsFiltersReturn {
             })
         }
 
+        // Filter by price range
+        const minPriceNum = filters.minPrice ? parseFloat(filters.minPrice) : null
+        const maxPriceNum = filters.maxPrice ? parseFloat(filters.maxPrice) : null
+
+        if (minPriceNum !== null || maxPriceNum !== null) {
+            filtered = filtered.filter(property => {
+                const price = property.price || 0
+                if (minPriceNum !== null && price < minPriceNum) return false
+                if (maxPriceNum !== null && price > maxPriceNum) return false
+                return true
+            })
+        }
+
         return filtered
     }, [filters])
 
@@ -164,6 +204,8 @@ export function useListingsFilters(): UseListingsFiltersReturn {
             filters.location.trim().length > 0 ||
             filters.agent.trim().length > 0 ||
             filters.bedroomCount.trim().length > 0 ||
+            filters.minPrice.trim().length > 0 ||
+            filters.maxPrice.trim().length > 0 ||
             filters.exactMatch
         )
     }, [filters])
@@ -176,6 +218,8 @@ export function useListingsFilters(): UseListingsFiltersReturn {
         setBedroomCount,
         setTransactionType,
         setExactMatch,
+        setMinPrice,
+        setMaxPrice,
         resetFilters,
         applyFilters,
         applyFiltersToRBProperties,
