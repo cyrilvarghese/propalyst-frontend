@@ -8,10 +8,11 @@
 
 import { Suspense } from 'react'
 import ListingsContent from './components/ListingsContent'
-
+import { GoogleTagManager } from '@next/third-parties/google'
 function ListingsContentFallback() {
     return (
         <div className="min-h-screen bg-[#1a1a1a] py-8">
+            <GoogleTagManager gtmId="G-09F9PPJ5CN" />
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-center py-16">
                     <div className="text-center">
