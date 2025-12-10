@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-
+  productionBrowserSourceMaps: false,
   // Base path for production (e.g., '/app' or '/frontend')
   // Set via NEXT_PUBLIC_BASE_PATH environment variable
   // Leave empty string for root domain deployment
