@@ -7,7 +7,7 @@
  */
 
 'use client'
-
+import { sendGTMEvent } from '@next/third-parties/google'
 import { useState, KeyboardEvent, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -133,6 +133,7 @@ export default function SearchInput({
     }, [maxPriceFilter])
 
     const handleSearch = () => {
+        sendGTMEvent({ event: 'buttonClicked', value: 'search_button' })
         const searchPropertyType = propertyType === 'all' ? '' : propertyType
         const searchMessageType = messageType === 'all' ? '' : messageType
 
@@ -420,6 +421,7 @@ export function SearchBar({
     }, [isLoading])
 
     const handleSearch = () => {
+        sendGTMEvent({ event: 'buttonClicked', value: 'search_button' })
         if (query.trim().length > 0) {
             onSearch(query.trim())
         } else {
