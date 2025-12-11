@@ -405,7 +405,10 @@ export default function ListingsContent() {
                             />
                         </div>
 
-                        <JoinGroupMessage />
+                        {/* Hidden on desktop since it's shown next to search bar */}
+                        <div className="lg:hidden">
+                            <JoinGroupMessage />
+                        </div>
                     </div>
 
                     <div className="px-4 pb-4 flex-1 flex flex-col min-h-0 md:overflow-hidden">
