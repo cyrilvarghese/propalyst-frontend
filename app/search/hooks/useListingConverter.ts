@@ -34,6 +34,7 @@ export function useListingConverter() {
             status: null,
             amenities: listing.special_features?.join(', ') || null,
             raw_message: listing.raw_message,
+            sender_name: listing.sender_name
         }
     }, [])
 

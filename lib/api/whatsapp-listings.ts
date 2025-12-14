@@ -31,6 +31,7 @@ export interface WhatsAppListing {
     special_features: string[] | null
     llm_json: any | null
     created_at: string
+    sender_name: string | null
 }
 
 /**

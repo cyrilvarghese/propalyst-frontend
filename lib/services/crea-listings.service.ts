@@ -52,6 +52,7 @@ export interface CREAListing {
     status: string | null
     amenities: string | null
     raw_message: string
+    sender_name: string | null
 }
 
 export interface CREAListingsResponse {

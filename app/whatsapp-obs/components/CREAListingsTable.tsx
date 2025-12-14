@@ -26,24 +26,22 @@ import {
     Calendar,
     User,
     Building2,
-    Phone,
     Home,
     CheckCircle2,
     Compass,
     Armchair,
-    Car,
-    MessageSquare
+    Car
 } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import TableHeaderWithFilters from './TableHeaderWithFilters'
 import WhatsAppMessagePopover from './WhatsAppMessagePopover'
-import WhatsAppLinkButton from './WhatsAppLinkButton'
 import Pagination from './Pagination'
 import CopyDebugSQLButton from './CopyDebugSQLButton'
 import CompareListingButton from './CompareListingButton'
 import RetryListingButton from './RetryListingButton'
 import CopyLinkButton from './CopyLinkButton'
 import AddMatchingSupplyButton from './AddMatchingSupplyButton'
+import AgentContactDisplay from './AgentContactDisplay'
 
 interface CREAListingsTableProps {
     listings: CREAListing[]
@@ -216,25 +214,9 @@ export default function CREAListingsTable({
                                             <TableCell className="align-top py-2">
                                                 <div className="space-y-0.5">
                                                     <div className="text-sm text-slate-900 font-medium">
-                                                        {listing.agent_name || 'N/A'}
+                                                        {listing.agent_name || listing.sender_name || 'N/A'}
                                                     </div>
-                                                    {listing.agent_contact && (
-                                                        <div className="flex flex-col gap-1 items-start">
-                                                            {listing.agent_contact.split(/[,/\n]+/).map((contact, index) => {
-                                                                const cleanContact = contact.trim()
-                                                                if (!cleanContact) return null
-                                                                return (
-                                                                    <WhatsAppLinkButton key={index} listing={listing} initialPhoneNumber={cleanContact}>
-                                                                        <button
-                                                                            className="text-xs text-slate-600 hover:text-slate-900 hover:underline inline-flex items-center gap-1 cursor-pointer"
-                                                                        >
-                                                                            <Phone className="w-3 h-3" /> ({cleanContact})
-                                                                        </button>
-                                                                    </WhatsAppLinkButton>
-                                                                )
-                                                            })}
-                                                        </div>
-                                                    )}
+                                                    <AgentContactDisplay listing={listing} />
                                                     {listing.company_name && (
                                                         <div className="text-xs text-slate-500">
                                                             {listing.company_name}
@@ -444,16 +426,11 @@ export default function CREAListingsTable({
                                                 {listing.company_name}
                                             </div>
                                         )}
+                                        <div className="mt-1">
+                                            <AgentContactDisplay listing={listing} />
+                                        </div>
                                     </div>
                                 </div>
-                                {listing.agent_contact && (
-                                    <WhatsAppLinkButton listing={listing}>
-                                        <Button size="sm" variant="outline" className="h-9 px-4 text-xs font-medium border-slate-200 text-slate-700 bg-white hover:bg-white hover:text-slate-700 gap-2 transition-none">
-                                            <MessageSquare className="w-3.5 h-3.5" />
-                                            Contact
-                                        </Button>
-                                    </WhatsAppLinkButton>
-                                )}
                             </div>
 
                             {/* Expandable Details */}
