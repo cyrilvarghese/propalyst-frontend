@@ -51,7 +51,10 @@ export default function AgentContactDisplay({ listing }: AgentContactDisplayProp
                 <PhoneButton contact={listing.sender_name} listing={listing} />
             </div>
         ) : (
-            <PlainText text={listing.sender_name} tag="p" />
+            <div className='flex flex-row'>
+                <span className="inline">~</span>
+                <PlainText text={listing.sender_name} tag="p" />
+            </div>
         )
     }
 
