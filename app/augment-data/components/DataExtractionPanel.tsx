@@ -100,7 +100,7 @@ export default function DataExtractionPanel() {
     const [fileError, setFileError] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null)
-    const [dateFormat, setDateFormat] = useState<'DD/MM/YY' | 'MM/DD/YY'>('DD/MM/YY')
+    const [dateFormat, setDateFormat] = useState<'DD/MM/YY' | 'MM/DD/YY'>('MM/DD/YY')
 
     // Stage 2: Processing state
     const [isProcessing, setIsProcessing] = useState(false)
