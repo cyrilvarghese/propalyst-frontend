@@ -179,7 +179,7 @@ export function useChunkedPagination(
     // Initial fetch on mount or when query changes
     useEffect(() => {
         // Reset everything when query/filters change
-        setAllListings([])
+        setAllListings  
         setCurrentLocalPage(1)
         fetchedOffsets.current.clear()
         isFetchingRef.current = false
@@ -229,7 +229,7 @@ export function useChunkedPagination(
             abortControllerRef.current = null
         }
 
-        // Update query/filters first (this will trigger useEffect to fetch)
+        // Update query/filters first
         if (query !== undefined) setCurrentQuery(query)
         if (propertyType !== undefined) setCurrentPropertyType(propertyType)
         if (messageType !== undefined) setCurrentMessageType(messageType)
@@ -241,7 +241,10 @@ export function useChunkedPagination(
         isFetchingRef.current = false
         setError(null)
         setHasMoreData(true) // Reset hasMoreData flag
-    }, [])
+
+        // Fetch first batch with new parameters
+        await fetchBatchRecords(0, false)
+    }, [fetchBatchRecords])
 
     // Refresh current search (re-fetch from beginning)
     const refresh = useCallback(async () => {

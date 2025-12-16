@@ -53,7 +53,6 @@ export default function ListingsContent() {
     const initialExactMatch = searchParams.get('exactMatch') === 'true'
     const initialMinPrice = searchParams.get('min_price') || ''
     const initialMaxPrice = searchParams.get('max_price') || ''
-    const leadId = searchParams.get('lead_id') || ''
 
     // Store RB properties and counts from API response
     const [rbProperties, setRbProperties] = useState<RBProperty[]>([])
@@ -102,7 +101,6 @@ export default function ListingsContent() {
 
     // Chunked pagination - fetches 1000 records, shows 200 per page
     const {
-        currentPageListings: rawListings,
         allListings, // All accumulated listings for client-side filtering
         isLoading,
         error,
@@ -110,7 +108,6 @@ export default function ListingsContent() {
         hasNext,
         hasPrevious,
         startIndex,
-        endIndex,
         goToNext,
         goToPrevious,
         goToPage,
@@ -127,17 +124,12 @@ export default function ListingsContent() {
         filters,
         setLocation,
         setAgent,
-        setProperty,
         setBedroomCount,
-        setTransactionType,
         setExactMatch,
         setMinPrice,
         setMaxPrice,
-        resetFilters,
         applyFilters,
-        applyFiltersToRBProperties,
-        hasActiveFilters
-    } = useListingsFilters()
+        applyFiltersToRBProperties } = useListingsFilters()
 
     // Update URL params when filters or search change
     const updateURLParams = useCallback((updates: {
