@@ -230,7 +230,7 @@ export default function DataExtractionPanel() {
             }
 
             // Refresh stats after all uploads complete
-            await fetchRawStats()
+            //  await fetchRawStats()
         } catch (error: any) {
             console.error('Error during upload:', error)
             setFileError(error.message || 'An error occurred during upload')
@@ -736,8 +736,8 @@ export default function DataExtractionPanel() {
                                 <div
                                     key={index}
                                     className={`p-4 rounded-md border ${response.success
-                                            ? 'bg-green-900/20 border-green-700'
-                                            : 'bg-red-900/20 border-red-700'
+                                        ? 'bg-green-900/20 border-green-700'
+                                        : 'bg-red-900/20 border-red-700'
                                         }`}
                                 >
                                     <div className="flex items-start justify-between gap-4">
