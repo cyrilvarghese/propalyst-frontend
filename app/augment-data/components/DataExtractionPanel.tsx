@@ -96,11 +96,14 @@ interface RawStatsData {
 
 export default function DataExtractionPanel() {
     // Stage 1: Upload state
-    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([])
     const [fileError, setFileError] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
-    const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null)
+    const [uploadResponses, setUploadResponses] = useState<(UploadResponse & { fileName: string })[]>([])
     const [dateFormat, setDateFormat] = useState<'DD/MM/YY' | 'MM/DD/YY'>('MM/DD/YY')
+    const [daysFilter, setDaysFilter] = useState<string>('7')
+    const [currentFileIndex, setCurrentFileIndex] = useState(0)
+    const [totalFiles, setTotalFiles] = useState(0)
 
     // Stage 2: Processing state
     const [isProcessing, setIsProcessing] = useState(false)
@@ -121,18 +124,19 @@ export default function DataExtractionPanel() {
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0]
-        if (file) {
-            // Validate file type
-            if (!file.name.endsWith('.txt')) {
-                setFileError('Please select a .txt file')
-                setSelectedFile(null)
+        const files = Array.from(event.target.files || [])
+        if (files.length > 0) {
+            // Validate all files are .txt
+            const invalidFiles = files.filter(f => !f.name.endsWith('.txt'))
+            if (invalidFiles.length > 0) {
+                setFileError(`Please select only .txt files. Invalid: ${invalidFiles.map(f => f.name).join(', ')}`)
+                setSelectedFiles([])
                 return
             }
             setFileError(null)
-            setSelectedFile(file)
+            setSelectedFiles(files)
         } else {
-            setSelectedFile(null)
+            setSelectedFiles([])
             setFileError(null)
         }
     }, [])
@@ -180,48 +184,62 @@ export default function DataExtractionPanel() {
 
     // STAGE 1: Upload File
     const handleUploadFile = useCallback(async () => {
-        // Validate file is selected
-        if (!selectedFile) {
-            setFileError('Please select a .txt file to upload')
+        // Validate files are selected
+        if (selectedFiles.length === 0) {
+            setFileError('Please select .txt files to upload')
             return
         }
 
         setIsUploading(true)
         setFileError(null)
-        setUploadResponse(null)
+        setUploadResponses([])
+        setTotalFiles(selectedFiles.length)
+        setCurrentFileIndex(0)
 
         try {
-            // Prepare FormData with file and date format preference
-            const formData = new FormData()
-            formData.append('file', selectedFile)
-            formData.append('date_format_preference', dateFormat)
+            // Upload files sequentially
+            for (let index = 0; index < selectedFiles.length; index++) {
+                const file = selectedFiles[index]
+                setCurrentFileIndex(index + 1)
 
-            // Make POST request with file upload
-            const response = await fetch(UPLOAD_FILE_ENDPOINT, {
-                method: 'POST',
-                body: formData,
-            })
+                // Prepare FormData with file and date format preference
+                const formData = new FormData()
+                formData.append('file', file)
+                formData.append('date_format_preference', dateFormat)
+                formData.append('cutoff_date_from_ui', parseInt(daysFilter, 10).toString())
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'Upload failed' }))
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+                // Make POST request with file upload
+                const response = await fetch(UPLOAD_FILE_ENDPOINT, {
+                    method: 'POST',
+                    body: formData,
+                })
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Upload failed' }))
+                    const errorResponse: UploadResponse & { fileName: string } = {
+                        success: false,
+                        error: errorData.message || `HTTP error! status: ${response.status}`,
+                        fileName: file.name,
+                    }
+                    setUploadResponses(prev => [...prev, errorResponse])
+                    continue
+                }
+
+                const data = await response.json()
+                setUploadResponses(prev => [...prev, { ...data, fileName: file.name }])
             }
 
-            const data = await response.json()
-            setUploadResponse(data)
-
-            // Refresh stats after upload
+            // Refresh stats after all uploads complete
             await fetchRawStats()
         } catch (error: any) {
             console.error('Error during upload:', error)
-            setUploadResponse({
-                success: false,
-                error: error.message || 'An error occurred during upload',
-            })
+            setFileError(error.message || 'An error occurred during upload')
         } finally {
             setIsUploading(false)
+            setCurrentFileIndex(0)
+            setTotalFiles(0)
         }
-    }, [selectedFile, dateFormat, fetchRawStats])
+    }, [selectedFiles, dateFormat, daysFilter, fetchRawStats])
 
     // STAGE 2: Process Messages with LLM
     const handleProcessMessages = useCallback(async () => {
@@ -388,8 +406,8 @@ export default function DataExtractionPanel() {
 
     // Fetch stats on mount
     useEffect(() => {
-        fetchStats()
-        fetchRawStats()
+        //  fetchStats()
+        //fetchRawStats()
     }, [fetchStats, fetchRawStats])
 
     // Refresh stats after extraction completes
@@ -397,8 +415,8 @@ export default function DataExtractionPanel() {
         if (isComplete) {
             // Small delay to ensure backend stats are updated
             setTimeout(() => {
-                fetchStats()
-                fetchRawStats()
+                //      fetchStats()
+                //   fetchRawStats()
             }, 500)
         }
     }, [isComplete, fetchStats, fetchRawStats])
@@ -408,7 +426,7 @@ export default function DataExtractionPanel() {
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Extraction Statistics Card */}
-                <Card className="bg-[#252525] border-gray-700">
+                {/* <Card className="bg-[#252525] border-gray-700">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-white">Extraction Statistics</CardTitle>
                         <Button
@@ -465,7 +483,7 @@ export default function DataExtractionPanel() {
                             </div>
                         )}
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Raw Stats Card */}
                 <Card className="bg-[#252525] border-gray-700">
@@ -483,7 +501,7 @@ export default function DataExtractionPanel() {
                     <CardContent>
                         {rawStats ? (
                             <div className="space-y-3">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-3 gap-4">
                                     <div>
                                         <div className="text-sm text-gray-400">Total (All Time)</div>
                                         <div className="text-2xl font-bold text-white">{rawStats.total_messages_all_time}</div>
@@ -493,29 +511,29 @@ export default function DataExtractionPanel() {
                                         <div className="text-2xl font-bold text-blue-400">{rawStats.recent_messages_4_months}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-400">Old (&gt; 4 Months)</div>
-                                        <div className="text-2xl font-bold text-purple-400">{rawStats.old_messages_over_4_months}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-gray-400">Processed</div>
-                                        <div className="text-2xl font-bold text-green-400">{rawStats.processed}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-gray-400">Unprocessed</div>
-                                        <div className="text-2xl font-bold text-yellow-400">{rawStats.unprocessed}</div>
-                                    </div>
-                                    <div>
                                         <div className="text-sm text-gray-400">Ready for LLM</div>
                                         <div className="text-2xl font-bold text-cyan-400">{rawStats.ready_for_llm}</div>
                                     </div>
-                                    <div>
-                                        <div className="text-sm text-gray-400">Deleted</div>
-                                        <div className="text-2xl font-bold text-red-400">{rawStats.deleted}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-gray-400">Media</div>
-                                        <div className="text-2xl font-bold text-orange-400">{rawStats.media}</div>
-                                    </div>
+                                </div>
+                                {/* <div className="pt-2 border-t border-gray-700">
+                                    <div className="text-sm text-gray-400 mb-2">Old (&gt; 4 Months)</div>
+                                    <div className="text-2xl font-bold text-purple-400">{rawStats.old_messages_over_4_months}</div>
+                                </div>
+                                <div className="pt-2 border-t border-gray-700">
+                                    <div className="text-sm text-gray-400 mb-2">Processed</div>
+                                    <div className="text-2xl font-bold text-green-400">{rawStats.processed}</div>
+                                </div>
+                                <div className="pt-2 border-t border-gray-700">
+                                    <div className="text-sm text-gray-400 mb-2">Unprocessed</div>
+                                    <div className="text-2xl font-bold text-yellow-400">{rawStats.unprocessed}</div>
+                                </div>
+                                <div className="pt-2 border-t border-gray-700">
+                                    <div className="text-sm text-gray-400 mb-2">Deleted</div>
+                                    <div className="text-2xl font-bold text-red-400">{rawStats.deleted}</div>
+                                </div>
+                                <div className="pt-2 border-t border-gray-700">
+                                    <div className="text-sm text-gray-400 mb-2">Media</div>
+                                    <div className="text-2xl font-bold text-orange-400">{rawStats.media}</div>
                                 </div>
                                 <div className="pt-2 border-t border-gray-700">
                                     <div className="text-sm text-gray-400 mb-2">Additional Info</div>
@@ -541,7 +559,7 @@ export default function DataExtractionPanel() {
                                             </>
                                         )}
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                         ) : (
                             <div className="text-gray-500 text-sm">
@@ -567,26 +585,51 @@ export default function DataExtractionPanel() {
                             <Label htmlFor="fileUpload" className="text-white">
                                 WhatsApp Export File (.txt)
                             </Label>
-                            <div className="flex items-center gap-2">
-                                <Label htmlFor="dateFormat" className="text-sm text-gray-400">
-                                    Date Format:
-                                </Label>
-                                <Select
-                                    value={dateFormat}
-                                    onValueChange={(value: 'DD/MM/YY' | 'MM/DD/YY') => setDateFormat(value)}
-                                    disabled={isUploading || isProcessing}
-                                >
-                                    <SelectTrigger
-                                        id="dateFormat"
-                                        className="w-[140px] bg-[#1a1a1a] border-gray-600 text-white h-8 text-sm"
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="daysFilter" className="text-sm text-gray-400">
+                                        Pick messages from:
+                                    </Label>
+                                    <Select
+                                        value={daysFilter}
+                                        onValueChange={setDaysFilter}
+                                        disabled={isUploading || isProcessing}
                                     >
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="DD/MM/YY">DD/MM/YY</SelectItem>
-                                        <SelectItem value="MM/DD/YY">MM/DD/YY</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                        <SelectTrigger
+                                            id="daysFilter"
+                                            className="w-[140px] bg-[#1a1a1a] border-gray-600 text-white h-8 text-sm"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="1">Last 1 day</SelectItem>
+                                            <SelectItem value="2">Last 2 days</SelectItem>
+                                            <SelectItem value="7">Last 7 days</SelectItem>
+                                            <SelectItem value="10">Last 10 days</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="dateFormat" className="text-sm text-gray-400">
+                                        Date Format:
+                                    </Label>
+                                    <Select
+                                        value={dateFormat}
+                                        onValueChange={(value: 'DD/MM/YY' | 'MM/DD/YY') => setDateFormat(value)}
+                                        disabled={isUploading || isProcessing}
+                                    >
+                                        <SelectTrigger
+                                            id="dateFormat"
+                                            className="w-[140px] bg-[#1a1a1a] border-gray-600 text-white h-8 text-sm"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="DD/MM/YY">DD/MM/YY</SelectItem>
+                                            <SelectItem value="MM/DD/YY">MM/DD/YY</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -596,6 +639,7 @@ export default function DataExtractionPanel() {
                                     id="fileUpload"
                                     type="file"
                                     accept=".txt"
+                                    multiple
                                     onChange={handleFileChange}
                                     disabled={isUploading || isProcessing}
                                     className="sr-only"
@@ -604,24 +648,26 @@ export default function DataExtractionPanel() {
                                     htmlFor="fileUpload"
                                     className={`flex items-center justify-center h-10 px-4 rounded-md border-2 border-dashed transition-colors ${isUploading || isProcessing
                                         ? 'border-gray-600 bg-gray-800 cursor-not-allowed opacity-50 pointer-events-none'
-                                        : selectedFile
+                                        : selectedFiles.length > 0
                                             ? 'border-green-600 bg-green-900/20 hover:border-green-500 cursor-pointer'
                                             : 'border-gray-600 bg-[#1a1a1a] hover:border-gray-500 hover:bg-[#2a2a2a] cursor-pointer'
                                         }`}
                                 >
                                     <span className="text-sm text-gray-300 truncate max-w-full">
-                                        {selectedFile ? selectedFile.name : 'Click to select .txt file'}
+                                        {selectedFiles.length > 0
+                                            ? `${selectedFiles.length} file(s) selected`
+                                            : 'Click to select .txt files'}
                                     </span>
                                 </label>
                             </div>
-                            {selectedFile && !isUploading && !isProcessing && (
+                            {selectedFiles.length > 0 && !isUploading && !isProcessing && (
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => {
-                                        setSelectedFile(null)
+                                        setSelectedFiles([])
                                         setFileError(null)
-                                        setUploadResponse(null)
+                                        setUploadResponses([])
                                         if (fileInputRef.current) {
                                             fileInputRef.current.value = ''
                                         }
@@ -632,10 +678,17 @@ export default function DataExtractionPanel() {
                                 </Button>
                             )}
                         </div>
-                        {selectedFile && (
-                            <p className="text-sm text-green-400">
-                                ✓ Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
-                            </p>
+                        {selectedFiles.length > 0 && (
+                            <div>
+                                <p className="text-sm text-green-400 mb-2">
+                                    ✓ Selected: {selectedFiles.length} file(s) - Total size: {(selectedFiles.reduce((sum, f) => sum + f.size, 0) / 1024).toFixed(2)} KB
+                                </p>
+                                <div className="text-xs text-gray-400 max-h-20 overflow-y-auto">
+                                    {selectedFiles.map((f) => (
+                                        <div key={f.name}>- {f.name} ({(f.size / 1024).toFixed(2)} KB)</div>
+                                    ))}
+                                </div>
+                            </div>
                         )}
                         {fileError && (
                             <p className="text-sm text-red-400">{fileError}</p>
@@ -646,7 +699,7 @@ export default function DataExtractionPanel() {
                     <div className="flex items-center gap-4">
                         <Button
                             onClick={handleUploadFile}
-                            disabled={isUploading || isProcessing || !selectedFile}
+                            disabled={isUploading || isProcessing || selectedFiles.length === 0}
                             className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                         >
                             {isUploading ? (
@@ -657,60 +710,88 @@ export default function DataExtractionPanel() {
                             ) : (
                                 <>
                                     <Upload className="h-4 w-4 mr-2" />
-                                    Upload File
+                                    Upload Files
                                 </>
                             )}
                         </Button>
                     </div>
 
-                    {/* Upload Response */}
-                    {uploadResponse && (
-                        <div className={`mt-4 p-4 rounded-md border ${uploadResponse.success
-                            ? 'bg-green-900/20 border-green-700'
-                            : 'bg-red-900/20 border-red-700'
-                            }`}>
-                            {uploadResponse.success ? (
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle2 className="h-5 w-5 text-green-400" />
-                                        <span className="text-green-400 font-semibold">Upload Successful!</span>
+                    {/* Upload Progress */}
+                    {isUploading && totalFiles > 0 && (
+                        <div className="mt-4 space-y-2">
+                            <div className="flex justify-between text-sm text-gray-400">
+                                <span>
+                                    Uploading: {currentFileIndex} / {totalFiles}
+                                </span>
+                                <span>{Math.round((currentFileIndex / totalFiles) * 100)}%</span>
+                            </div>
+                            <Progress value={(currentFileIndex / totalFiles) * 100} className="h-2" />
+                        </div>
+                    )}
+
+                    {/* Upload Responses */}
+                    {uploadResponses.length > 0 && (
+                        <div className="mt-4 space-y-3">
+                            {uploadResponses.map((response, index) => (
+                                <div
+                                    key={index}
+                                    className={`p-4 rounded-md border ${response.success
+                                            ? 'bg-green-900/20 border-green-700'
+                                            : 'bg-red-900/20 border-red-700'
+                                        }`}
+                                >
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                {response.success ? (
+                                                    <>
+                                                        <CheckCircle2 className="h-4 w-4 text-green-400" />
+                                                        <span className="text-green-400 font-semibold text-sm">{response.fileName}</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <AlertCircle className="h-4 w-4 text-red-400" />
+                                                        <span className="text-red-400 font-semibold text-sm">{response.fileName}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            {response.success ? (
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                    {response.messages_parsed !== undefined && (
+                                                        <div className="text-xs">
+                                                            <div className="text-gray-400">Parsed</div>
+                                                            <div className="font-bold text-white">{response.messages_parsed}</div>
+                                                        </div>
+                                                    )}
+                                                    {response.messages_inserted !== undefined && (
+                                                        <div className="text-xs">
+                                                            <div className="text-gray-400">Inserted</div>
+                                                            <div className="font-bold text-green-400">{response.messages_inserted}</div>
+                                                        </div>
+                                                    )}
+                                                    {response.messages_skipped !== undefined && (
+                                                        <div className="text-xs">
+                                                            <div className="text-gray-400">Skipped</div>
+                                                            <div className="font-bold text-yellow-400">{response.messages_skipped}</div>
+                                                        </div>
+                                                    )}
+                                                    {response.ready_for_llm !== undefined && (
+                                                        <div className="text-xs">
+                                                            <div className="text-gray-400">Ready for LLM</div>
+                                                            <div className="font-bold text-blue-400">{response.ready_for_llm}</div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-red-300">{response.error || 'Upload failed'}</p>
+                                            )}
+                                            {response.message && (
+                                                <p className="text-xs text-gray-400 mt-2">{response.message}</p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-                                        {uploadResponse.messages_parsed !== undefined && (
-                                            <div>
-                                                <div className="text-sm text-gray-400">Messages Parsed</div>
-                                                <div className="text-xl font-bold text-white">{uploadResponse.messages_parsed}</div>
-                                            </div>
-                                        )}
-                                        {uploadResponse.messages_inserted !== undefined && (
-                                            <div>
-                                                <div className="text-sm text-gray-400">Messages Inserted</div>
-                                                <div className="text-xl font-bold text-green-400">{uploadResponse.messages_inserted}</div>
-                                            </div>
-                                        )}
-                                        {uploadResponse.messages_skipped !== undefined && (
-                                            <div>
-                                                <div className="text-sm text-gray-400">Messages Skipped</div>
-                                                <div className="text-xl font-bold text-yellow-400">{uploadResponse.messages_skipped}</div>
-                                            </div>
-                                        )}
-                                        {uploadResponse.ready_for_llm !== undefined && (
-                                            <div>
-                                                <div className="text-sm text-gray-400">Ready for LLM</div>
-                                                <div className="text-xl font-bold text-blue-400">{uploadResponse.ready_for_llm}</div>
-                                            </div>
-                                        )}
-                                    </div>
-                                    {uploadResponse.message && (
-                                        <p className="text-sm text-gray-300 mt-2">{uploadResponse.message}</p>
-                                    )}
                                 </div>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <AlertCircle className="h-5 w-5 text-red-400" />
-                                    <span className="text-red-400">{uploadResponse.error || 'Upload failed'}</span>
-                                </div>
-                            )}
+                            ))}
                         </div>
                     )}
                 </CardContent>
