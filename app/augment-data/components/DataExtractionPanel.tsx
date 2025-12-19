@@ -490,12 +490,13 @@ export default function DataExtractionPanel() {
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-white">Raw Messages Statistics</CardTitle>
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={fetchRawStats}
                             disabled={isLoadingRawStats}
                         >
                             <RefreshCw className={`h-4 w-4 ${isLoadingRawStats ? 'animate-spin' : ''}`} />
+                            Refresh Stats
                         </Button>
                     </CardHeader>
                     <CardContent>
