@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * WhatsApp Search Latest Page - Server Component
  * ===============================================
@@ -5,6 +7,8 @@
  * Server component that wraps the client ListingsContent with Suspense
  * to handle useSearchParams() hook properly.
  */
+import { useEffect } from 'react';
+import { initMixpanel } from "../../lib/mixpanel-client";
 
 import { Suspense } from 'react'
 import ListingsContent from './components/ListingsContent'
@@ -26,6 +30,9 @@ function ListingsContentFallback() {
 }
 
 export default function WhatsAppSearchLatestPage() {
+    useEffect(() => {
+        initMixpanel(); // Initialize Mixpanel
+    }, []);
     return (
         <Suspense fallback={<ListingsContentFallback />}>
             <ListingsContent />
