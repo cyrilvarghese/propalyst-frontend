@@ -31,6 +31,7 @@ function ListingsContentFallback() {
 
 export default function WhatsAppSearchLatestPage() {
     useEffect(() => {
+        console.log("mixpanel added")
         initMixpanel(); // Initialize Mixpanel
     }, []);
     return (
