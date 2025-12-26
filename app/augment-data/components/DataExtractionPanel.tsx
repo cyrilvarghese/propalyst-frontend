@@ -206,7 +206,7 @@ export default function DataExtractionPanel() {
                 const formData = new FormData()
                 formData.append('file', file)
                 formData.append('date_format_preference', dateFormat)
-                formData.append('cutoff_days_from_ui', parseInt(daysFilter, 10).toString())
+                formData.append('cutoff_days_from_ui', daysFilter)
 
                 // Make POST request with file upload
                 const response = await fetch(UPLOAD_FILE_ENDPOINT, {
@@ -607,6 +607,7 @@ export default function DataExtractionPanel() {
                                             <SelectItem value="2">Last 2 days</SelectItem>
                                             <SelectItem value="7">Last 7 days</SelectItem>
                                             <SelectItem value="10">Last 10 days</SelectItem>
+                                            <SelectItem value="30">Last 30 days</SelectItem>
                                             <SelectItem value="all">All Messages</SelectItem>
                                         </SelectContent>
                                     </Select>
