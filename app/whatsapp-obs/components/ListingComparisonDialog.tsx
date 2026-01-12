@@ -19,7 +19,8 @@ import { Loader2 } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import ListingComparisonTable from './ListingComparisonTable'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// Use relative URL to go through Next.js proxy (configured in next.config.js)
+const API_BASE_URL = ''
 
 interface ComparisonData {
     processed: any

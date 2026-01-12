@@ -4,9 +4,11 @@
  * 
  * Fetches WhatsApp listings using the backend API.
  * Uses the new /api/whatsapp-listings endpoints.
+ * Requests go through Next.js proxy to avoid CORS issues.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// Use relative URL to go through Next.js proxy (configured in next.config.js)
+const API_BASE_URL = ''
 
 export interface WhatsAppListing {
     id: string

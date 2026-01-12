@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import WhatsAppMessageDialog from '@/app/whatsapp-obs/components/WhatsAppMessageDialog'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -182,6 +183,26 @@ export default function ListingDetailContent({ listingId }: ListingDetailContent
                                 </div>
                             </div>
                         </div>
+
+                        {/* Property Images */}
+                        {processed.images && processed.images.length > 0 && (
+                            <div className="border-b p-4 sm:p-6 overflow-hidden">
+                                <h3 className="text-sm font-semibold text-gray-500 mb-3">Photos ({processed.images.length})</h3>
+                                <div className="flex gap-3 overflow-x-auto pb-2">
+                                    {processed.images.map((imageUrl: string, index: number) => (
+                                        <div key={index} className="relative w-64 h-48 flex-shrink-0 rounded-lg overflow-hidden border shadow-sm">
+                                            <Image
+                                                src={imageUrl}
+                                                alt={`Property image ${index + 1}`}
+                                                fill
+                                                unoptimized={true}
+                                                className="object-cover hover:scale-105 transition-transform duration-300"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Property Details */}
                         <div className="p-4 sm:p-6 space-y-4">

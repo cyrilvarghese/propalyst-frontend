@@ -1,43 +1,39 @@
 'use client'
 
 /**
- * WhatsApp Search Latest Page - Server Component
- * ===============================================
+ * Search New Page - Server Component
+ * ===================================
  *
- * Server component that wraps the client ListingsContent with Suspense
- * to handle useSearchParams() hook properly.
+ * New Google-style search landing page at /search-new
+ * This is a completely new page that doesn't modify any existing code.
  */
 import { useEffect } from 'react';
-import { initMixpanel } from "../../lib/mixpanel-client";
-
 import { Suspense } from 'react'
-import ListingsContent from './components/ListingsContent'
+import SearchContainer from './components/SearchContainer'
+import { initMixpanel } from "../../lib/mixpanel-client";
 import { GoogleTagManager } from '@next/third-parties/google'
-function ListingsContentFallback() {
+
+function SearchContentFallback() {
     return (
-        <div className="min-h-screen bg-[#1a1a1a] py-8">
+        <div className="min-h-screen bg-white flex items-center justify-center">
             <GoogleTagManager gtmId="G-09F9PPJ5CN" />
-            <div className="max-w-7xl mx-auto px-4">
-                <div className="flex items-center justify-center py-16">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-                        <p className="text-gray-400">Loading search...</p>
-                    </div>
-                </div>
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Loading...</p>
             </div>
         </div>
     )
 }
 
-export default function WhatsAppSearchLatestPage() {
+export default function SearchNewPage() {
     useEffect(() => {
         console.log("mixpanel added")
-        initMixpanel(); // Initialize Mixpanel
+        initMixpanel();
     }, []);
+
     return (
-        <Suspense fallback={<ListingsContentFallback />}>
-            <ListingsContent />
+        <Suspense fallback={<SearchContentFallback />}>
+            <SearchContainer />
         </Suspense>
     )
 }
-

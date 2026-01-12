@@ -21,7 +21,9 @@ import { Button } from '@/components/ui/button'
 import { Loader2, RefreshCw, CheckCircle2, ArrowRight } from 'lucide-react'
 import { CREAListing } from '@/lib/services/crea-listings.service'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+// Use relative URL to go through Next.js proxy (configured in next.config.js)
+const API_BASE_URL = ''
 
 interface RetryListingDialogProps {
     listing: CREAListing

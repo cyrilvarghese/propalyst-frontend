@@ -44,6 +44,21 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@tavily/core'],
   },
+
+  // Proxy API requests to backend to avoid CORS issues
+  async rewrites() {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    return [
+      {
+        source: '/api/whatsapp-listings/:path*',
+        destination: `${backendUrl}/api/whatsapp-listings/:path*`,
+      },
+      {
+        source: '/api/whatsapp-raw/:path*',
+        destination: `${backendUrl}/api/whatsapp-raw/:path*`,
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
