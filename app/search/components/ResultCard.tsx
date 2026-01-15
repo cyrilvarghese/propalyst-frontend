@@ -74,8 +74,10 @@ export default function ResultCard({ listing, property }: ResultCardProps) {
     const isDebug = searchParams.get('debug') === 'true'
 
     const handleOpenLink = () => {
-        // Direct to listing detail page in new tab
-        if (data?.id) {
+        // For RB properties, use external static_html_url; otherwise use internal listing page
+        if (property?.static_html_url) {
+            window.open(property.static_html_url, '_blank')
+        } else if (data?.id) {
             window.open(`/listing/${data.id}`, '_blank')
         }
     }
