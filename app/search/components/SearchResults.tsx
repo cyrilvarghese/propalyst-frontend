@@ -545,9 +545,11 @@ export default function SearchResults({
             {/* Footer */}
             <footer className="py-6 px-6 bg-gray-100 border-t border-gray-200">
                 <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0 text-sm text-gray-600">
-                    <span className="text-center md:text-left">
-                        © 2026 <a href="https://propalyst.com" target="_blank" rel="noopener noreferrer" className="text-[#e74c3c]">Propalyst</a>. All rights reserved.
-                    </span>
+                    <div className="text-center md:text-left flex flex-col md:block">
+                        <span>© 2026 <a href="https://propalyst.com" target="_blank" rel="noopener noreferrer" className="text-[#e74c3c]">Propalyst</a>. All rights reserved.</span>
+                        <span className="hidden md:inline mx-2">|</span>
+                        <span className="mt-1 md:mt-0">Need help? Write to <a href="mailto:support@propalyst.com" className="hover:text-[#e74c3c] transition-colors">support@propalyst.com</a></span>
+                    </div>
                     <div className="flex flex-col md:flex-row items-center gap-3">
                         <span>Want to add your listing?</span>
                         <a
