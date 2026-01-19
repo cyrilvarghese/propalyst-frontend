@@ -548,7 +548,7 @@ export default function SearchResults({
                     <div className="text-center md:text-left flex flex-col md:block">
                         <span>© 2026 <a href="https://propalyst.com" target="_blank" rel="noopener noreferrer" className="text-[#e74c3c]">Propalyst</a>. All rights reserved.</span>
                         <span className="hidden md:inline mx-2">|</span>
-                        <span className="mt-1 md:mt-0">Need help? Write to <a href="mailto:support@propalyst.com" className="hover:text-[#e74c3c] transition-colors">support@propalyst.com</a></span>
+                        <span className="mt-1 md:mt-0">Need help? Support at <a href="mailto:support@propalyst.com" className="text-[#e74c3c] hover:underline transition-colors">Propalyst.com</a></span>
                     </div>
                     <div className="flex flex-col md:flex-row items-center gap-3">
                         <span>Want to add your listing?</span>
