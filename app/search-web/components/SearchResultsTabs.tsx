@@ -38,7 +38,7 @@ export default function SearchResultsTabs({ query, provider, results }: SearchRe
         const encodedUrl = encodeURIComponent(url)
 
         // Navigate to listing page with URL and original query
-        router.push(`/search/listing?url=${encodedUrl}&orig_query=${encodeURIComponent(query)}`)
+        router.push(`/search-web/listing?url=${encodedUrl}&orig_query=${encodeURIComponent(query)}`)
     }
 
     // Filter results by source
