@@ -54,7 +54,7 @@ export default function ResultCard({ property }: ResultCardProps) {
     const encodedUrl = encodeURIComponent(property.url)
 
     // Navigate to the listing details page
-    router.push(`/search/listing?url=${encodedUrl}`)
+    router.push(`/search-web/listing?url=${encodedUrl}`)
   }
 
   // Prevent card click when clicking the "View Full Listing" link
